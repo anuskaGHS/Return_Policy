@@ -300,9 +300,9 @@ body {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border-subtle);
   color: var(--text-secondary);
-  font-size: clamp(0.64rem, 1.8vw, 0.72rem);
+  font-size: clamp(0.62rem, 1.7vw, 0.72rem);
   font-weight: 600;
-  padding: 0.38rem 0.3rem;
+  padding: 0.38rem 0.25rem;
   border-radius: var(--radius-full);
   cursor: pointer;
   transition: all 0.2s ease;
@@ -311,12 +311,47 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 0.25rem;
 }
 
 .preset-btn:hover {
   background: rgba(99, 102, 241, 0.15);
   color: #fff;
   border-color: var(--border-focus);
+}
+
+.preset-btn.active {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.35) 0%, rgba(56, 189, 248, 0.28) 100%);
+  border-color: #818cf8;
+  color: #ffffff;
+  box-shadow: 0 0 14px rgba(99, 102, 241, 0.45);
+  font-weight: 700;
+}
+
+.preset-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preset-cross {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  font-size: 0.55rem;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.preset-cross:hover {
+  background: #f43f5e;
+  transform: scale(1.15);
 }
 
 .slider-group {

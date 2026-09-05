@@ -23,6 +23,7 @@ const PRESETS = [
 
 export default function FinancialSliders({ values, onChange }) {
   const [showSampleInfo, setShowSampleInfo] = useState(false);
+  const [activePreset, setActivePreset] = useState(null);
 
   const handleSliderChange = (field, val) => {
     onChange({
@@ -32,10 +33,18 @@ export default function FinancialSliders({ values, onChange }) {
   };
 
   const applyPreset = (preset) => {
+    setActivePreset(preset.name);
+    setShowSampleInfo(false);
     onChange(preset.values);
   };
 
+  const handleClearPreset = (e) => {
+    e.stopPropagation();
+    setActivePreset(null);
+  };
+
   const handleLoadSample = () => {
+    setActivePreset(null);
     onChange({
       monthly_sip: 15000,
       loan_emi: 28000,
@@ -90,16 +99,31 @@ export default function FinancialSliders({ values, onChange }) {
           <span>QUICK PERSONA PRESETS</span>
         </div>
         <div className="presets-row">
-          {PRESETS.map((p) => (
-            <button
-              key={p.name}
-              type="button"
-              className="preset-btn"
-              onClick={() => applyPreset(p)}
-            >
-              {p.name}
-            </button>
-          ))}
+          {PRESETS.map((p) => {
+            const isSelected = activePreset === p.name;
+            return (
+              <button
+                key={p.name}
+                type="button"
+                className={`preset-btn ${isSelected ? 'active' : ''}`}
+                onClick={() => applyPreset(p)}
+                title={p.name}
+              >
+                <span className="preset-text">{p.name}</span>
+                {isSelected && (
+                  <span
+                    className="preset-cross"
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Deselect ${p.name}`}
+                    onClick={handleClearPreset}
+                  >
+                    ✕
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 
