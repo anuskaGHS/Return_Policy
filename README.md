@@ -49,7 +49,7 @@ Middle-class Indian households face three structural challenges when managing th
   - `Balanced Builder` (₹15K SIP, ₹22K EMI, 8.5% rate, ₹14L income)
   - `Aggressive Saver` (₹35K SIP, ₹15K EMI, 7.8% rate, ₹24L income)
   - `High Debt Stress` (₹3K SIP, ₹45K EMI, 11.5% rate, ₹9L income)
-- **"Load Sample Portfolio" Feature:** One-tap realistic case study (`Sharma Family, Pune | Axis Bluechip SIP + Home Loan`) displaying ₹15K SIP, ₹28K EMI, 9.2% rate, and ₹18L income with dedicated info metadata.
+- **"Load Sample Portfolio" Feature:** One-tap realistic case study (`Ghosh Family, Siliguri | Axis Bluechip SIP + Home Loan`) displaying ₹15K SIP, ₹28K EMI, 9.2% rate, and ₹18L income with dedicated info metadata.
 
 ### 2. Explainable Financial Health Score
 - **Dynamic Radial SVG Gauge (0–100):** Real-time animated score with color-coded sentiment tiers:

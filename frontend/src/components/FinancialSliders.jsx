@@ -70,7 +70,7 @@ export default function FinancialSliders({ values, onChange }) {
           <div className="sample-info-card" role="status">
             <div className="sample-info-content">
               <Info size={16} className="sample-info-icon" />
-              <span>Sample: Sharma Family, Pune | Axis Bluechip SIP + Home Loan</span>
+              <span>Sample: Ghosh Family, Siliguri | Axis Bluechip SIP + Home Loan</span>
             </div>
             <button
               type="button"
