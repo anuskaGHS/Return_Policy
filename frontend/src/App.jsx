@@ -170,6 +170,13 @@ export default function App() {
           />
         </div>
       </main>
+
+      <footer className="app-footer">
+        <p className="footer-copyright">© 2026 Return Policy. All rights reserved.</p>
+        <p className="footer-disclaimer">
+          Return Policy is an informational tool only. AI-generated outputs are educational and do not constitute SEBI-registered financial advice. Always consult a qualified financial advisor before making major financial decisions.
+        </p>
+      </footer>
     </div>
   );
 }
