@@ -26,28 +26,38 @@ export default function App() {
 
   const debounceTimerRef = useRef(null);
 
-  // Check health on mount
+  // Check health on mount with automatic retry for cold-start latency
   useEffect(() => {
-    async function verifyBackend() {
+    let isMounted = true;
+    async function verifyBackend(retries = 2) {
       const health = await checkBackendHealth();
+      if (!isMounted) return;
       if (health.status === "healthy") {
         setBackendStatus("healthy");
         setIsGroqConfigured(health.groq_configured);
+        setBannerNotice(null);
         if (!health.groq_configured) {
           setBannerNotice({
-            message: "Running in Smart Heuristic Mode. Add GROQ_API_KEY to backend/.env to activate live Groq Llama 3 8B inference.",
+            message: "Running in Smart Heuristic Mode. Add GROQ_API_KEY to backend environment to activate live Groq AI inference.",
             type: "info"
           });
         }
       } else {
-        setBackendStatus("offline");
-        setBannerNotice({
-          message: "FastAPI server connecting... Using client-side deterministic models.",
-          type: "warning"
-        });
+        if (retries > 0) {
+          setTimeout(() => {
+            if (isMounted) verifyBackend(retries - 1);
+          }, 2500);
+        } else {
+          setBackendStatus("offline");
+          setBannerNotice({
+            message: "FastAPI server connecting... Using client-side deterministic models.",
+            type: "warning"
+          });
+        }
       }
     }
     verifyBackend();
+    return () => { isMounted = false; };
   }, []);
 
   // Update deterministic preview immediately on slider change, then debounce Groq call
@@ -70,6 +80,8 @@ export default function App() {
         }
         if (response.ai_assessment) {
           setAiAssessment(response.ai_assessment);
+          setBackendStatus("healthy");
+          setBannerNotice(null);
         }
       } catch (err) {
         console.warn("Backend simulate call failed, using client-side fallback:", err.message);
