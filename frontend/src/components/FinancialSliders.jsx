@@ -21,11 +21,27 @@ const PRESETS = [
   }
 ];
 
+function isMatchingPreset(presetValues, currentValues) {
+  if (!currentValues || !presetValues) return false;
+  return (
+    Number(presetValues.monthly_sip) === Number(currentValues.monthly_sip) &&
+    Number(presetValues.loan_emi) === Number(currentValues.loan_emi) &&
+    Math.abs(Number(presetValues.loan_interest_rate) - Number(currentValues.loan_interest_rate)) < 0.05 &&
+    Number(presetValues.annual_income) === Number(currentValues.annual_income)
+  );
+}
+
 export default function FinancialSliders({ values, onChange }) {
   const [showSampleInfo, setShowSampleInfo] = useState(false);
-  const [activePreset, setActivePreset] = useState(null);
+  const [dismissedPreset, setDismissedPreset] = useState(null);
+
+  // Dynamic matching: stays highlighted if values match the preset, disables if diverged, or until user clicks cross
+  const activePreset = PRESETS.find(
+    (p) => isMatchingPreset(p.values, values) && p.name !== dismissedPreset
+  )?.name || null;
 
   const handleSliderChange = (field, val) => {
+    setDismissedPreset(null);
     onChange({
       ...values,
       [field]: parseFloat(val)
@@ -33,18 +49,18 @@ export default function FinancialSliders({ values, onChange }) {
   };
 
   const applyPreset = (preset) => {
-    setActivePreset(preset.name);
+    setDismissedPreset(null);
     setShowSampleInfo(false);
     onChange(preset.values);
   };
 
-  const handleClearPreset = (e) => {
+  const handleClearPreset = (e, presetName) => {
     e.stopPropagation();
-    setActivePreset(null);
+    setDismissedPreset(presetName);
   };
 
   const handleLoadSample = () => {
-    setActivePreset(null);
+    setDismissedPreset(null);
     onChange({
       monthly_sip: 15000,
       loan_emi: 28000,
@@ -116,7 +132,7 @@ export default function FinancialSliders({ values, onChange }) {
                     role="button"
                     tabIndex={0}
                     aria-label={`Deselect ${p.name}`}
-                    onClick={handleClearPreset}
+                    onClick={(e) => handleClearPreset(e, p.name)}
                   >
                     ✕
                   </span>
