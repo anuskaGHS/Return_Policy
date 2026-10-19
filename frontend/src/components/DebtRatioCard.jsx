@@ -1,5 +1,5 @@
 import React from 'react';
-import { CreditCard, AlertCircle } from 'lucide-react';
+import { CreditCard } from 'lucide-react';
 import { formatPct, formatINR } from '../utils/formatters';
 
 export default function DebtRatioCard({ metrics }) {

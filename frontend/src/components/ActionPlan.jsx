@@ -2,7 +2,7 @@ import React from 'react';
 import { Target, AlertTriangle, ShieldCheck } from 'lucide-react';
 
 export default function ActionPlan({ plan, vulnerability, isLoading }) {
-  const bullets = plan && plan.length > 0 ? plan : [
+  const defaultBullets = [
     {
       bullet_number: 1,
       title: "Analyzing Debt Prepayment Opportunities",
@@ -19,6 +19,8 @@ export default function ActionPlan({ plan, vulnerability, isLoading }) {
       action: "Determining monthly fixed liability safety cushions for uninterrupted compounding."
     }
   ];
+
+  const bullets = plan && plan.length > 0 ? plan : defaultBullets;
 
   return (
     <section className={`glass-panel action-plan-panel ${isLoading ? 'loading-pulse' : ''}`} aria-label="3-Bullet Priority Action Plan">
@@ -50,7 +52,9 @@ export default function ActionPlan({ plan, vulnerability, isLoading }) {
         <div className="vulnerability-box">
           <AlertTriangle size={18} style={{ flexShrink: 0, marginTop: '2px' }} />
           <div>
-            <strong style={{ color: '#fecdd3' }}>Key Vulnerability / Drag: </strong>
+            <strong style={{ color: '#fecdd3' }}>
+              Key Vulnerability / Drag:{' '}
+            </strong>
             <span>{vulnerability}</span>
           </div>
         </div>

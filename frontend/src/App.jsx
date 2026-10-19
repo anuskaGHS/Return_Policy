@@ -1,12 +1,19 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
+import HomePage from './pages/HomePage';
+import AboutPage from './pages/AboutPage';
+import WhatIfPage from './pages/WhatIfPage';
+import { derive } from './lib/whatif/healthScore.js';
 import FinancialSliders from './components/FinancialSliders';
 import ScoreGauge from './components/ScoreGauge';
 import WealthCard from './components/WealthCard';
 import DebtRatioCard from './components/DebtRatioCard';
 import ActionPlan from './components/ActionPlan';
 import ErrorBanner from './components/ErrorBanner';
-import { simulatePolicy, calculateInstantPreview, checkBackendHealth } from './services/api';
+import TiltCard from './components/TiltCard';
+import ExitAdvisor from './components/ExitAdvisor';
+import { simulatePolicy, checkBackendHealth } from './services/api';
+import { RefreshCw, Sliders, Clock } from 'lucide-react';
 
 const INITIAL_INPUTS = {
   monthly_sip: 15000,
@@ -16,15 +23,68 @@ const INITIAL_INPUTS = {
 };
 
 export default function App() {
+  // Navigation tab: 'home' | 'about' | 'calculator'
+  const [activeTab, setActiveTab] = useState(() => {
+    const hash = window.location.hash.replace('#', '').toLowerCase();
+    if (hash === 'exit-advisor') return 'calculator';
+    if (['home', 'about', 'calculator'].includes(hash)) {
+      return hash;
+    }
+    return 'home';
+  });
+
+  // Decision Engine sub-tab: 'simulator' | 'exitAdvisor'
+  const [calculatorSubTab, setCalculatorSubTab] = useState(() => {
+    const hash = window.location.hash.replace('#', '').toLowerCase();
+    if (hash === 'exit-advisor') return 'exitAdvisor';
+    return 'simulator';
+  });
+
   const [inputs, setInputs] = useState(INITIAL_INPUTS);
-  const [deterministicMetrics, setDeterministicMetrics] = useState(() => calculateInstantPreview(INITIAL_INPUTS));
-  const [aiAssessment, setAiAssessment] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [language, setLanguage] = useState('en');
+  const [whatIfInputs, setWhatIfInputs] = useState(null);
+  const [explanation, setExplanation] = useState(null);
+  const [aiPlan, setAiPlan] = useState(null);
+  const [aiStatus, setAiStatus] = useState('loading');   // 'loading' | 'ai' | 'fallback'
   const [backendStatus, setBackendStatus] = useState("checking");
   const [isGroqConfigured, setIsGroqConfigured] = useState(false);
   const [bannerNotice, setBannerNotice] = useState(null);
 
-  const debounceTimerRef = useRef(null);
+  // Sync state with URL hash
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '').toLowerCase();
+      if (hash === 'exit-advisor') {
+        setActiveTab('calculator');
+        setCalculatorSubTab('exitAdvisor');
+      } else if (['home', 'about', 'calculator'].includes(hash)) {
+        setActiveTab(hash);
+        if (hash === 'calculator') {
+          setCalculatorSubTab('simulator');
+        }
+      }
+      window.scrollTo({ top: 0 });
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  const navigateTo = (tab, subTab = 'simulator') => {
+    setActiveTab(tab);
+    if (tab === 'calculator') {
+      setCalculatorSubTab(subTab);
+      window.location.hash = subTab === 'exitAdvisor' ? '#exit-advisor' : '#calculator';
+    } else {
+      window.location.hash = `#${tab}`;
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleSelectPreset = (newInputs) => {
+    setInputs(newInputs);
+    navigateTo('calculator', 'simulator');
+  };
+
 
   // Check health on mount with automatic retry for cold-start latency
   useEffect(() => {
@@ -60,80 +120,82 @@ export default function App() {
     return () => { isMounted = false; };
   }, []);
 
-  // Update deterministic preview immediately on slider change, then debounce Groq call
   useEffect(() => {
-    // 1. Instant 0-latency calculation for immediate UI response
-    const preview = calculateInstantPreview(inputs);
-    setDeterministicMetrics(preview);
-
-    // 2. Debounce the full backend simulation call by 400ms
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-
-    setIsLoading(true);
-    debounceTimerRef.current = setTimeout(async () => {
+    const onWhatIf = activeTab === 'calculator' && calculatorSubTab === 'simulator';
+    if (!onWhatIf || !whatIfInputs) return undefined;
+    let cancelled = false;
+    setExplanation(null);
+    setAiPlan(null);
+    setAiStatus('loading');
+    const timer = setTimeout(async () => {
       try {
-        const response = await simulatePolicy(inputs);
-        if (response.deterministic_metrics) {
-          setDeterministicMetrics(response.deterministic_metrics);
+        const response = await simulatePolicy({ ...whatIfInputs, language });
+        if (cancelled) return;
+        setBackendStatus('healthy');
+        const ai = response?.ai_assessment;
+        if (ai && ai.source === 'groq') {
+          const rules = Array.isArray(ai.priority_action_plan)
+            ? ai.priority_action_plan
+                .filter((r) => r && r.title && r.action)
+                .map((r) => ({ title: r.title, action: r.action }))
+            : [];
+          if (rules.length) {
+            setExplanation(ai.score_rationale || null);
+            setAiPlan({ rules, vulnerability: ai.key_vulnerability || null });
+            setAiStatus('ai');
+          } else {
+            setExplanation(null);
+            setAiPlan(null);
+            setAiStatus('fallback');
+          }
+        } else {
+          setExplanation(null);
+          setAiPlan(null);
+          setAiStatus('fallback');
         }
-        if (response.ai_assessment) {
-          setAiAssessment(response.ai_assessment);
-          setBackendStatus("healthy");
-          setBannerNotice(null);
+        const local = derive(whatIfInputs).score;
+        if (response?.health_score && response.health_score.score !== local) {
+          console.warn('Health score mismatch (browser vs backend):', local, response.health_score.score);
         }
       } catch (err) {
-        console.warn("Backend simulate call failed, using client-side fallback:", err.message);
-        // Synthesize fallback AI assessment locally if backend is unavailable
-        const sipRatio = preview.sip_to_income_ratio_pct;
-        const emiRatio = preview.emi_to_income_ratio_pct;
-        let score = Math.round(50 + (sipRatio * 1.5) - (emiRatio * 0.9) - ((inputs.loan_interest_rate - 7) * 1.2));
-        score = Math.max(15, Math.min(95, score));
-
-        let tier = "Balanced Builder";
-        if (score < 45) tier = "Critical Debt Stress";
-        else if (score < 70) tier = "Vulnerable Leveraged";
-        else if (score >= 80) tier = "Solid Wealth Builder";
-
-        setAiAssessment({
-          financial_health_score: score,
-          rating_tier: tier,
-          score_rationale: `Your EMI commitment consumes ${emiRatio.toFixed(1)}% of income while your SIP compounds at ${sipRatio.toFixed(1)}%. Projected 5-year wealth reaches ₹${(preview.five_year_sip_projected_wealth / 100000).toFixed(2)} Lakhs.`,
-          priority_action_plan: [
-            {
-              bullet_number: 1,
-              title: "Adopt a 50% Bonus Prepayment Rule",
-              action: `Allocate half of annual bonuses to prepay the ${inputs.loan_interest_rate}% debt principal, saving compounded interest.`
-            },
-            {
-              bullet_number: 2,
-              title: "Enforce 10% Annual SIP Step-Up",
-              action: `Step up your ₹${inputs.monthly_sip.toLocaleString('en-IN')} SIP by 10% each year as income expands.`
-            },
-            {
-              bullet_number: 3,
-              title: "Protect Fixed Commitments with 6-Month Liquid Reserve",
-              action: `Maintain ₹${Math.round(inputs.loan_emi * 6).toLocaleString('en-IN')} in high-interest sweep deposits for emergency continuity.`
-            }
-          ],
-          key_vulnerability: `Carrying debt at ${inputs.loan_interest_rate}% interest diminishes net gains from equity mutual fund compounding.`
-        });
-      } finally {
-        setIsLoading(false);
+        if (!cancelled) {
+          console.warn('Simulate call failed; the page keeps its built-in explanation:', err.message);
+          setAiStatus('fallback');
+        }
       }
-    }, 400);
+    }, 700);
+    return () => { cancelled = true; clearTimeout(timer); };
+  }, [whatIfInputs, language, activeTab, calculatorSubTab]);
 
-    return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
-    };
-  }, [inputs]);
+  const showLanguageToggle = activeTab === 'calculator' && calculatorSubTab === 'simulator';
+
+  if (activeTab === 'calculator' && calculatorSubTab === 'simulator') {
+    return (
+      <WhatIfPage
+        initialProfile={inputs}
+        explanation={explanation}
+        aiPlan={aiPlan}
+        aiStatus={aiStatus}
+        lang={language}
+        onLangChange={setLanguage}
+        onInputsChange={setWhatIfInputs}
+        activeTool="whatif"
+        onToolChange={(id) => { if (id === 'smartexit') navigateTo('calculator', 'exitAdvisor'); }}
+      />
+    );
+  }
 
   return (
-    <div className="app-wrapper">
-      <Header backendStatus={backendStatus} isGroqConfigured={isGroqConfigured} />
+    <div className={`app-wrapper ${activeTab === 'home' ? 'app-wrapper-home' : ''}`}>
+      <Header
+        currentTab={activeTab}
+        onNavigate={navigateTo}
+        backendStatus={backendStatus}
+        isGroqConfigured={isGroqConfigured}
+        language={language}
+        onLanguageChange={setLanguage}
+        showLanguageToggle={showLanguageToggle}
+      />
 
       {bannerNotice && (
         <ErrorBanner
@@ -143,38 +205,72 @@ export default function App() {
         />
       )}
 
-      <main className="dashboard-grid">
-        {/* Left Column: Sliders Input Panel */}
-        <div>
-          <FinancialSliders values={inputs} onChange={setInputs} />
-        </div>
-
-        {/* Right Column: AI Score, Compounding Metrics & Policy Plan */}
-        <div className="results-column">
-          <ScoreGauge
-            score={aiAssessment?.financial_health_score ?? 68}
-            tier={aiAssessment?.rating_tier}
-            rationale={aiAssessment?.score_rationale}
-            isLoading={isLoading}
+      {/* Main Content Pages */}
+      <div className="page-transition-wrapper">
+        {activeTab === 'home' && (
+          <HomePage
+            onNavigate={navigateTo}
+            onSelectPreset={handleSelectPreset}
           />
+        )}
 
-          <div className="metrics-two-row">
-            <WealthCard metrics={deterministicMetrics} />
-            <DebtRatioCard metrics={deterministicMetrics} />
+        {activeTab === 'about' && (
+          <AboutPage
+            tryHref="#calculator"
+            homeHref="#home"
+          />
+        )}
+
+        {activeTab === 'calculator' && (
+          <div className="calculator-view">
+            {/* Decision Engine Sub-Navigation Bar */}
+            <div className="engine-subtabs-bar glass-panel" role="tablist" aria-label="Decision Engine Tools">
+              <button
+                id="subtab-simulator-btn"
+                role="tab"
+                aria-selected={calculatorSubTab === 'simulator'}
+                className={`engine-subtab-btn ${calculatorSubTab === 'simulator' ? 'active' : ''}`}
+                onClick={() => navigateTo('calculator', 'simulator')}
+              >
+                <Sliders size={16} />
+                <span>What-If Policy Simulator</span>
+              </button>
+              <button
+                id="subtab-exit-advisor-btn"
+                role="tab"
+                aria-selected={calculatorSubTab === 'exitAdvisor'}
+                className={`engine-subtab-btn ${calculatorSubTab === 'exitAdvisor' ? 'active' : ''}`}
+                onClick={() => navigateTo('calculator', 'exitAdvisor')}
+              >
+                <Clock size={16} />
+                <span>Smart Exit & Hold Tax Advisor</span>
+                <span className="subtab-new-badge">NEW</span>
+              </button>
+            </div>
+
+            {calculatorSubTab === 'exitAdvisor' && (
+              <ExitAdvisor />
+            )}
           </div>
+        )}
+      </div>
 
-          <ActionPlan
-            plan={aiAssessment?.priority_action_plan}
-            vulnerability={aiAssessment?.key_vulnerability}
-            isLoading={isLoading}
-          />
-        </div>
-      </main>
-
+      {/* Global Footer */}
       <footer className="app-footer">
-        <p className="footer-copyright">© 2026 Return Policy. All rights reserved.</p>
+        <div className="footer-links-row">
+          <button className="footer-link" onClick={() => navigateTo('home')}>Home</button>
+          <span className="footer-dot">•</span>
+          <button className="footer-link" onClick={() => navigateTo('about')}>About Platform</button>
+          <span className="footer-dot">•</span>
+          <button className="footer-link" onClick={() => navigateTo('calculator', 'simulator')}>Decision Engine</button>
+          <span className="footer-dot">•</span>
+          <button className="footer-link" onClick={() => navigateTo('calculator', 'exitAdvisor')}>Smart Exit Advisor</button>
+        </div>
+        <p className="footer-copyright">© 2026 Return Policy — AI-Powered Household Finance Decision Engine.</p>
         <p className="footer-disclaimer">
-          Return Policy is an informational tool only. AI-generated outputs are educational and do not constitute SEBI-registered financial advice. Always consult a qualified financial advisor before making major financial decisions.
+          {activeTab === 'home'
+            ? 'Return Policy is an informational tool, not SEBI-registered financial advice. AI-generated outputs are educational, and the 12% annual return used in projections is illustrative. Consult a qualified financial advisor before major financial decisions.'
+            : 'Return Policy is an informational tool only. AI-generated outputs are educational and do not constitute SEBI-registered financial advice. Standard 12% CAGR equity compounding is illustrative. Always consult a qualified financial advisor before major financial commitments.'}
         </p>
       </footer>
     </div>

@@ -49,3 +49,5 @@ pnpm-debug.log*
 Thumbs.db
 *.swp
 *.swo
+
+!frontend/src/lib/

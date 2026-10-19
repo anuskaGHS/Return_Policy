@@ -1,0 +1,14 @@
+/* REFERENCE ONLY: the header styling used in the approved design (reference/return-policy-hero.html).
+   Class names differ from the app. Use it as a visual spec for Header.jsx on the Home page. */
+.nav{position:absolute;top:0;left:0;right:0;z-index:3;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:calc(1.1rem + env(safe-area-inset-top,0px)) clamp(1.25rem,4vw,3.5rem) 0}
+.brand{justify-self:start;font-weight:800;font-size:1.2rem;letter-spacing:-.02em;text-decoration:none;color:#fff}
+.links{display:flex;gap:clamp(1.2rem,2.4vw,2.3rem)}
+.links a{color:#ece8fb;text-decoration:none;font-size:.9rem;font-weight:500;letter-spacing:-.01em;transition:color .18s ease}
+.links a:hover,.links a[aria-current="page"]{color:#fff}
+.links a[aria-current="page"]::before{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:currentColor;margin-right:.55rem;vertical-align:.12em}
+.actions{justify-self:end;display:flex;align-items:center;gap:.5rem}
+.lang{display:inline-flex;border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:3px;background:rgba(0,0,0,.35)}
+.lang button{border:0;background:none;color:#cfc9ee;font-family:inherit;font-weight:500;font-size:.8rem;padding:.4rem .8rem;border-radius:999px;cursor:pointer;line-height:1.2}
+.lang button[aria-pressed="true"]{color:#fff;background:rgba(255,255,255,.1)}
+.pill{display:inline-flex;align-items:center;gap:.5rem;height:40px;padding:0 1.1rem;border-radius:999px;background:#fdfdfd;color:#050505;font-size:.9rem;font-weight:500;text-decoration:none;white-space:nowrap}
+@media (max-width:860px){.links,.pill{display:none}.nav{grid-template-columns:1fr auto}}

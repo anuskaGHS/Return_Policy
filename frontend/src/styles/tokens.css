@@ -1,0 +1,16 @@
+:root {
+  /* Return Policy Theme Tokens (Flat Palette) */
+  --bg: #14110F;
+  --surface: #1E1A17;
+  --border: #2E2823;
+  --ink: #F3EDE2;
+  --ink-soft: #D8D0C0;
+  --ink-muted: #A39A8C;
+  --accent: #D9A441;
+  --on-accent: #14110F;
+  --gain: #6FB38A;
+  --risk: #D2674A;
+
+  /* Font Stack */
+  --font-sans: 'Plus Jakarta Sans', 'Noto Sans Devanagari', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}

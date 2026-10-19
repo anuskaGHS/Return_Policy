@@ -55,10 +55,27 @@ def test_fallback_ai_assessment():
     assert 0 <= assessment.financial_health_score <= 100
     assert len(assessment.priority_action_plan) == 3
     assert assessment.rating_tier != ""
-    assert assessment.score_rationale != ""
+def test_fallback_ai_assessment_hindi():
+    req = SimulationRequest(
+        monthly_sip=15000.0,
+        loan_emi=10000.0,
+        loan_interest_rate=7.5,
+        annual_income=1500000.0,
+        language="hi"
+    )
+    metrics = calculate_deterministic_metrics(req)
+    assessment = get_fallback_assessment(req, metrics)
+
+    assert 0 <= assessment.financial_health_score <= 100
+    assert len(assessment.priority_action_plan) == 3
+    # Check for Devanagari Hindi characters
+    assert any('\u0900' <= char <= '\u097F' for char in assessment.rating_tier)
+    assert any('\u0900' <= char <= '\u097F' for char in assessment.score_rationale)
+    assert any('\u0900' <= char <= '\u097F' for char in assessment.priority_action_plan[0].title)
 
 if __name__ == "__main__":
     test_calculator_basic_case()
     test_calculator_high_debt_risk()
     test_fallback_ai_assessment()
+    test_fallback_ai_assessment_hindi()
     print("All backend tests passed successfully!")

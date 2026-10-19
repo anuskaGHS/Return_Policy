@@ -1,0 +1,209 @@
+/* About page. Everything is scoped under .ab and uses ab- class names, so nothing here touches other pages.
+   Tokens match the Home sections (.hs). Card colours come from PALETTES in data/homeFeatures.jsx. */
+.ab{--bg:#030304;--surface:#10131A;--surface-2:#1A1E27;--border:rgba(255,255,255,.12);--text:#F4F6F9;--soft:#C9CED8;--muted:#8E95A3;--on-accent:#0A0B10;--btn-bg:linear-gradient(180deg,#FFFFFF,#C9CFDA);--pill-line:rgba(205,211,222,.5);--gain:#6FD8A8;--risk:#FF8A7A;--glass:rgba(255,255,255,.04);--glass-edge:rgba(255,255,255,.14);--e:cubic-bezier(.16,1,.3,1);
+  position:relative;box-sizing:border-box;background:var(--bg);color:var(--text);min-height:100vh;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  font-family:'Plus Jakarta Sans','Noto Sans Devanagari',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-font-smoothing:antialiased;overflow-x:clip}
+.ab,.ab *,.ab *::before,.ab *::after{box-sizing:border-box}
+:where(.ab) a{color:inherit;text-decoration:none}
+.ab a:focus-visible,.ab button:focus-visible{outline:2px solid #fff;outline-offset:3px}
+.ab-cv{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;display:block}
+
+/* ---------- shared bits ---------- */
+.ab-main{position:relative;z-index:1}
+.ab-tag{display:inline-flex;align-items:center;gap:.55rem;padding:.45rem .95rem;border-radius:999px;border:1px solid rgba(255,255,255,.28);background:rgba(3,3,4,.45);font-size:.7rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text)}
+.ab-tag i{width:6px;height:6px;border-radius:50%;background:#fff;display:block}
+.ab-sec{position:relative;max-width:1280px;margin:0 auto;padding:clamp(4.5rem,10vw,8rem) clamp(1.25rem,4vw,3.5rem) clamp(2rem,4vw,3rem)}
+.ab-head{display:flex;flex-direction:column;align-items:flex-start;gap:1.1rem;max-width:760px}
+.ab-head h2{margin:0;font-weight:500;font-size:clamp(2.1rem,5vw,4rem);line-height:1.04;letter-spacing:-.03em;text-wrap:balance;text-shadow:0 2px 28px rgba(0,0,0,.6)}
+.ab-head p{margin:0;max-width:46ch;font-weight:300;font-size:clamp(1rem,1.4vw,1.15rem);line-height:1.6;color:var(--soft);text-shadow:0 1px 18px rgba(0,0,0,.7)}
+.ab-grid{display:grid;gap:14px;margin-top:clamp(2rem,4vw,3.2rem)}
+.ab-grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.ab-grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.ab-card{position:relative;display:flex;flex-direction:column;min-height:280px;padding:20px;border-radius:22px;border:1px solid var(--border);
+  background:linear-gradient(172deg,rgba(255,255,255,.075),rgba(255,255,255,.022));-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  box-shadow:inset 0 1px 0 var(--glass-edge),0 24px 48px rgba(0,0,0,.35)}
+.ab-num{position:absolute;top:18px;right:20px;font-size:.78rem;font-weight:500;letter-spacing:.1em;color:var(--muted)}
+.ab-card h3{margin:auto 0 .5rem;font-size:1.15rem;font-weight:600;letter-spacing:-.015em;line-height:1.25}
+.ab-card p{margin:0;font-size:.9rem;line-height:1.5;color:var(--soft)}
+.ab-stat{display:block;font-size:clamp(2rem,3vw,2.5rem);font-weight:700;letter-spacing:-.035em;line-height:1;padding-right:2.2rem}
+.ab-stat b{font-weight:700}.ab-stat b.r{color:var(--risk)}.ab-stat i{font-style:normal;font-weight:300;color:var(--muted);font-size:.6em;margin:0 .15em}
+.ab-stat-l{display:block;margin-top:.5rem;font-size:.72rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.ab-cap{margin:1.1rem 0 0;font-size:.78rem;color:var(--muted)}
+
+/* ---------- hero ---------- */
+.ab-hero{position:relative;min-height:100vh;min-height:100svh;max-width:1280px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,.8fr);align-items:end;align-content:end;gap:2rem 3rem;padding:7rem clamp(1.25rem,4vw,3.5rem) clamp(2.2rem,6vh,4rem)}
+.ab-hero-copy{display:flex;flex-direction:column;align-items:flex-start;gap:1.3rem}
+.ab-h1{margin:0;font-weight:500;font-size:clamp(2.5rem,6.4vw,5.6rem);line-height:1.02;letter-spacing:-.035em;text-shadow:0 2px 30px rgba(0,0,0,.65)}
+.ab-ln{display:block;overflow:hidden;padding:.12em 0 .1em;margin:-.12em 0 -.1em}
+.ab-ln>span{display:block;animation:ab-rise 1.05s var(--e) both}
+.ab-ln:nth-child(2)>span{animation-delay:.12s}
+.ab-hero-sub{margin:0 0 .4rem;max-width:38ch;font-weight:300;font-size:clamp(1rem,1.35vw,1.15rem);line-height:1.6;color:var(--soft);text-shadow:0 1px 18px rgba(0,0,0,.8);animation:ab-fade 1s ease .5s both}
+.ab-cue{position:absolute;left:50%;bottom:1.1rem;width:1px;height:34px;background:linear-gradient(var(--soft),transparent);opacity:.6;animation:ab-cue 2.2s ease-in-out infinite}
+@keyframes ab-rise{from{transform:translateY(108%)}to{transform:none}}
+@keyframes ab-fade{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes ab-cue{0%,100%{transform:scaleY(.4);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}}
+
+/* ---------- name ---------- */
+.ab-two{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:stretch;gap:14px;margin-top:clamp(2rem,4vw,3.2rem)}
+.ab-two .ab-card{min-height:230px}
+.ab-word{display:block;margin:auto 0 .6rem;font-size:clamp(2rem,3.6vw,3rem);font-weight:500;letter-spacing:-.03em;line-height:1}
+.ab-plus{align-self:center;font-size:1.6rem;font-weight:300;color:var(--muted)}
+
+/* ---------- how it works ---------- */
+.ab-ico{display:grid;place-items:center;width:46px;height:46px;border-radius:14px;border:1px solid var(--border);background:rgba(255,255,255,.05)}
+.ab-ico svg{width:22px;height:22px;stroke:var(--text);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.ab-how .ab-card{min-height:230px}
+.ab-how .ab-num{color:var(--accent)}
+.ab-how .ab-ico{margin-bottom:1.6rem;border-color:var(--line);background:var(--chip)}
+.ab-how .ab-ico svg{stroke:var(--accent)}
+.ab-how .ab-card h3{margin:0 0 .55rem}
+.ab-how .ab-card:focus-visible{outline:2px solid #fff;outline-offset:3px}
+/* once revealed, interactions should be quick (transition-delay: 0s) */
+.ab-card.ab-done,
+.ab .pal.ab-done,
+.ab-qa.pal.ab-done{transition:transform .35s cubic-bezier(.22,1,.36,1),box-shadow .35s cubic-bezier(.22,1,.36,1);transition-delay:0s}
+
+/* ---------- ask (example questions) ---------- */
+.ab-panel{display:grid;gap:14px;margin-top:clamp(2rem,4vw,3rem)}
+.ab-qa{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:1rem 3rem;align-items:center;padding:clamp(1.3rem,2.6vw,2rem);border-radius:22px}
+.ab-q{display:flex;gap:14px;align-items:flex-start;margin:0;font-size:clamp(1.1rem,1.7vw,1.4rem);font-weight:500;letter-spacing:-.02em;line-height:1.3}
+.ab-qn{flex:0 0 auto;margin-top:.45em;font-size:.7rem;font-weight:700;letter-spacing:.1em;color:var(--accent)}
+.ab-a{margin:0;font-size:.95rem;line-height:1.6;color:var(--soft)}
+.ab-a b{font-weight:700;color:var(--text)}
+.ab-v{display:inline-block;margin-left:.5rem;vertical-align:.08em;font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:3px 10px;border-radius:99px;background:var(--tagbg);color:var(--tagtx);white-space:nowrap}
+
+/* ---------- coloured cards: the colours are inline custom properties set from PALETTES (see CardSelection.jsx) ---------- */
+.ab .pal{position:relative;background:var(--pbg);color:var(--text);border:1px solid var(--card-edge);-webkit-backdrop-filter:none;backdrop-filter:none;
+  box-shadow:0 28px 56px rgba(0,0,0,.6),0 4px 10px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.35);
+  -webkit-tap-highlight-color:transparent;
+  transition:transform .35s cubic-bezier(.22,1,.36,1),box-shadow .35s cubic-bezier(.22,1,.36,1)}
+
+/* ---------- hover a coloured card: lift + glow from behind in that card's own colour ---------- */
+@media (hover: hover) and (pointer: fine){
+  .ab .pal:hover{
+    position:relative;
+    z-index:2;
+    transform:translateY(-8px) scale(1.02);
+    box-shadow:0 0 0 1px rgb(var(--g) / .55),
+               0 0 36px 4px rgb(var(--g) / .45),
+               0 0 90px 16px rgb(var(--g) / .25),
+               0 24px 48px rgba(0,0,0,.5);
+    transition-delay:0s;
+  }
+}
+
+/* ---------- closing ---------- */
+.ab-end{max-width:900px;text-align:center;padding-bottom:clamp(4rem,9vw,7rem)}
+.ab-end .ab-head{align-items:center;margin:0 auto}
+.ab-end .ab-head p{margin:0 auto}
+.ab-promise{display:flex;align-items:flex-start;gap:12px;text-align:left;margin:2rem auto 0;max-width:640px;padding:16px 18px;border-radius:16px;border:1px solid var(--border);background:rgba(255,255,255,.035);font-size:.84rem;line-height:1.55;color:var(--soft)}
+.ab-promise svg{flex:0 0 auto;width:18px;height:18px;margin-top:2px;stroke:var(--soft);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.ab-ctas{margin-top:1.8rem;display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap}
+.ab-btn{display:inline-flex;align-items:center;justify-content:center;height:48px;padding:0 1.6rem;border-radius:999px;font:500 .95rem inherit;white-space:nowrap;transition:filter .18s,border-color .18s}
+.ab-btn.p{background:var(--btn-bg);color:var(--on-accent);box-shadow:0 0 30px rgba(200,212,235,.12)}
+.ab-btn.p:hover{filter:brightness(1.06)}
+.ab-btn.g{border:1px solid var(--border);background:rgba(0,0,0,.4);color:var(--text)}
+.ab-btn.g:hover{border-color:var(--pill-line)}
+
+/* ---------- reveal ---------- */
+.ab-rv{opacity:0;transform:translateY(18px);transition:opacity .9s var(--e),transform .9s var(--e);transition-delay:var(--d,0s)}
+.ab-rv.ab-in{opacity:1;transform:none}
+
+@media (max-width:1100px){.ab-grid-4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:860px){  .ab-hero{grid-template-columns:1fr;align-items:end;gap:1.3rem}.ab-hero-sub{margin:0}
+  .ab-grid-3{grid-template-columns:1fr}.ab-card{min-height:0}
+  .ab-two{grid-template-columns:1fr}.ab-plus{justify-self:center}
+  .ab-qa{grid-template-columns:1fr}}
+@media (max-width:560px){
+  .ab-grid-4{grid-template-columns:1fr}.ab-how .ab-card{min-height:0}.ab-card{padding:18px}
+  .ab-card h3{margin-top:1.6rem}.ab-two .ab-card{min-height:0}}
+@media (prefers-reduced-motion:reduce){.ab *{animation:none!important;transition:none!important}.ab-rv{opacity:1;transform:none}.ab .pal:hover{transform:none!important}}
+
+/* ==========================================================================
+   ROUTE-SCOPED APP SHELL OVERRIDES (Active only on /about)
+   ========================================================================== */
+body.ab-route {
+  background-color: #030304 !important;
+}
+
+body.ab-route::before {
+  display: none !important;
+}
+
+body.ab-route .app-wrapper {
+  max-width: 100% !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: #030304 !important;
+}
+
+body.ab-route .page-transition-wrapper {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+body.ab-route .site-header {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 100 !important;
+  width: 100% !important;
+  background: transparent !important;
+  padding: calc(1.1rem + env(safe-area-inset-top, 0px)) clamp(1.25rem, 4vw, 3.5rem) 0 !important;
+  box-sizing: border-box !important;
+  margin-bottom: 0 !important;
+}
+
+body.ab-route .app-footer {
+  margin-top: 0 !important;
+  padding: 1.75rem 1.25rem 2.5rem !important;
+  background: #030304 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+body.ab-route .footer-links-row {
+  gap: 1.6rem !important;
+}
+
+body.ab-route .footer-link {
+  color: #C9CED8 !important;
+  font-size: 0.9rem !important;
+  font-weight: 500 !important;
+  padding: 0 !important;
+  background: none !important;
+  border: none !important;
+  text-decoration: none !important;
+  font-family: inherit !important;
+  transition: color 0.18s ease !important;
+}
+
+body.ab-route .footer-link:hover {
+  color: #F4F6F9 !important;
+  text-decoration: none !important;
+}
+
+body.ab-route .footer-dot {
+  display: none !important;
+}
+
+body.ab-route .footer-links-row button:nth-of-type(4) {
+  display: none !important;
+}
+
+body.ab-route .footer-copyright {
+  display: none !important;
+}
+
+body.ab-route .footer-disclaimer {
+  max-width: 74ch !important;
+  margin: 1.1rem auto 0 !important;
+  font-size: 0.78rem !important;
+  line-height: 1.6 !important;
+  color: #8E95A3 !important;
+}

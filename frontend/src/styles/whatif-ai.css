@@ -1,0 +1,18 @@
+/* Loading and notice states for the AI-written parts of the What-if page. Imported after whatif.css. */
+@keyframes wi-shimmer{0%{background-position:-240px 0}100%{background-position:240px 0}}
+.wi-skel-line{display:block;height:.8rem;border-radius:99px;background:linear-gradient(90deg,rgba(255,255,255,.08) 0,rgba(255,255,255,.2) 50%,rgba(255,255,255,.08) 100%);background-size:480px 100%;animation:wi-shimmer 1.4s linear infinite}
+.wi-skel-line.w1{width:62%;height:1rem;margin-top:.15rem}
+.wi-skel-line.w2{width:100%;margin-top:.8rem}
+.wi-skel-line.w3{width:86%;margin-top:.5rem}
+.wi-skel-line.w4{width:54%;margin-top:.5rem}
+.wi-plan .wi-rule.skel .wi-rule-n{opacity:.45}
+.wi-ai-state{display:inline-flex;align-items:center;gap:.5rem}
+.wi-ai-state i{width:8px;height:8px;border-radius:50%;background:var(--gold,#F3D58A);animation:wi-pulse 1.4s ease-out infinite}
+.wi-plan .wi-vuln.skel{background:rgba(246,243,236,.16);border-color:rgba(246,243,236,.2)}
+.wi-plan .wi-vuln.skel .wi-skel-line{background:linear-gradient(90deg,rgba(20,21,26,.08) 0,rgba(20,21,26,.2) 50%,rgba(20,21,26,.08) 100%);background-size:480px 100%;width:70%;margin:0}
+.wi-ai-note{display:flex;gap:.7rem;align-items:flex-start;margin-top:1rem;padding:.8rem 1rem;border-radius:14px;background:rgba(243,213,138,.1);border:1px solid rgba(243,213,138,.35);color:#F6E7B8;font-size:.88rem;line-height:1.5}
+.wi-ai-note svg{flex:0 0 auto;width:18px;height:18px;margin-top:2px;fill:none;stroke:var(--gold,#F3D58A);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.wi-why-load{display:flex;flex-direction:column;gap:.45rem;margin-top:.9rem}
+.wi-why-load .wi-skel-line{background:linear-gradient(90deg,rgba(20,21,26,.07) 0,rgba(20,21,26,.16) 50%,rgba(20,21,26,.07) 100%);background-size:480px 100%}
+.wi-why-load span.txt{font-size:.82rem;color:var(--cr-soft)}
+@media (prefers-reduced-motion:reduce){.wi-skel-line{animation:none}}
