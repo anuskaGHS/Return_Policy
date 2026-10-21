@@ -3,6 +3,7 @@ import Header from './components/Header';
 import HomePage from './pages/HomePage';
 import AboutPage from './pages/AboutPage';
 import WhatIfPage from './pages/WhatIfPage';
+import ExitPage from './pages/ExitPage';
 import { derive } from './lib/whatif/healthScore.js';
 import FinancialSliders from './components/FinancialSliders';
 import ScoreGauge from './components/ScoreGauge';
@@ -10,10 +11,7 @@ import WealthCard from './components/WealthCard';
 import DebtRatioCard from './components/DebtRatioCard';
 import ActionPlan from './components/ActionPlan';
 import ErrorBanner from './components/ErrorBanner';
-import TiltCard from './components/TiltCard';
-import ExitAdvisor from './components/ExitAdvisor';
 import { simulatePolicy, checkBackendHealth } from './services/api';
-import { RefreshCw, Sliders, Clock } from 'lucide-react';
 
 const INITIAL_INPUTS = {
   monthly_sip: 15000,
@@ -185,6 +183,16 @@ export default function App() {
     );
   }
 
+  if (activeTab === 'calculator' && calculatorSubTab === 'exitAdvisor') {
+    return (
+      <ExitPage
+        lang={language}
+        onLangChange={setLanguage}
+        onToolChange={(id) => { if (id === 'whatif') navigateTo('calculator', 'simulator'); }}
+      />
+    );
+  }
+
   return (
     <div className={`app-wrapper ${activeTab === 'home' ? 'app-wrapper-home' : ''}`}>
       <Header
@@ -221,38 +229,7 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'calculator' && (
-          <div className="calculator-view">
-            {/* Decision Engine Sub-Navigation Bar */}
-            <div className="engine-subtabs-bar glass-panel" role="tablist" aria-label="Decision Engine Tools">
-              <button
-                id="subtab-simulator-btn"
-                role="tab"
-                aria-selected={calculatorSubTab === 'simulator'}
-                className={`engine-subtab-btn ${calculatorSubTab === 'simulator' ? 'active' : ''}`}
-                onClick={() => navigateTo('calculator', 'simulator')}
-              >
-                <Sliders size={16} />
-                <span>What-If Policy Simulator</span>
-              </button>
-              <button
-                id="subtab-exit-advisor-btn"
-                role="tab"
-                aria-selected={calculatorSubTab === 'exitAdvisor'}
-                className={`engine-subtab-btn ${calculatorSubTab === 'exitAdvisor' ? 'active' : ''}`}
-                onClick={() => navigateTo('calculator', 'exitAdvisor')}
-              >
-                <Clock size={16} />
-                <span>Smart Exit & Hold Tax Advisor</span>
-                <span className="subtab-new-badge">NEW</span>
-              </button>
-            </div>
 
-            {calculatorSubTab === 'exitAdvisor' && (
-              <ExitAdvisor />
-            )}
-          </div>
-        )}
       </div>
 
       {/* Global Footer */}

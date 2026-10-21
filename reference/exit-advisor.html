@@ -1,0 +1,1158 @@
+<title>Smart Exit Advisor</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* Layout: black page, one purple console. Inputs on lavender, verdict on the Home card purple, cost cliff on deep purple, head-to-head, rule tiles, then one yellow plain-words card. Dark only, same tokens as Home. */
+:root{
+  color-scheme:dark;
+  --bg:#030304;--surface:#10131A;--surface-2:#1A1E27;--line:rgba(255,255,255,.12);
+  --text:#F4F6F9;--soft:#C9CED8;--muted:#8E95A3;--on-accent:#0A0B10;
+  --btn-bg:linear-gradient(180deg,#FFFFFF,#C9CFDA);
+  --v1:#8A1BB8;--v2:#6A17B0;--v3:#4B0F86;--vdeep:#2A0A52;--night:#1B0836;
+  --lav:#F1E6FD;--lav-2:#E3CCF8;--lav-ink:#2A0A52;--lav-ink2:#4B2480;--lav-ink3:#6E4A9C;--lav-line:rgba(42,10,82,.2);
+  --pink:#FFC2E4;--hot:#FF2D8A;--mint:#8CF2C0;--coral:#FFB3A5;--gain-d:#0F6B47;--risk-d:#A3192F;--amber:#F2B36B;
+  --y-ink:#17130A;--y-soft:#2E2810;--y-muted:#4F4515;
+  --e:cubic-bezier(.16,1,.3,1);
+  --font:'Plus Jakarta Sans','Noto Sans Devanagari',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --serif:'Playfair Display',Georgia,'Times New Roman',serif;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);-webkit-font-smoothing:antialiased;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:2px solid #fff;outline-offset:3px}
+.wrap{max-width:1240px;margin:0 auto;padding-inline:clamp(0px,2.5vw,32px)}
+svg.i{width:1em;height:1em;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+
+/* header */
+.top .wrap{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:16px;height:80px}
+.logo{font-weight:800;font-size:1.25rem;letter-spacing:-.03em}
+.nav{display:flex;gap:2rem;font-size:.95rem;color:var(--soft)}
+.nav a:hover{color:var(--text)}
+.nav a.on{color:var(--text);display:inline-flex;align-items:center;gap:8px}
+.nav a.on::before{content:'';width:4px;height:4px;border-radius:50%;background:currentColor}
+.hbtn{display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 1.15rem;border-radius:999px;background:var(--btn-bg);color:var(--on-accent);font-weight:500;font-size:.92rem;white-space:nowrap}
+.hbtn svg{width:12px;height:10px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+@media(max-width:900px){.nav{display:none}}
+
+/* tabs + language */
+.toprow{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:6px}
+.tabs{display:flex;gap:6px;padding:6px;border:1px solid var(--line);border-radius:999px;background:var(--surface);width:fit-content;max-width:100%}
+.tab{display:inline-flex;align-items:center;gap:9px;padding:11px 20px;border-radius:999px;font-weight:600;font-size:.9rem;color:var(--muted);white-space:nowrap;transition:color .2s}
+.tab:hover{color:var(--text)}
+.tab.on{background:linear-gradient(160deg,var(--v1),var(--v3));color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}
+.tab .short{display:none}
+@media(max-width:700px){.tabs{width:100%}.tab{flex:1;justify-content:center;padding:11px 10px}.tab .long{display:none}.tab .short{display:inline}}
+.lang{display:inline-flex;padding:4px;border:1px solid var(--line);border-radius:999px;background:var(--surface)}
+.lang button{border:0;background:transparent;cursor:pointer;padding:9px 16px;border-radius:999px;font-weight:700;font-size:.85rem;color:var(--muted);transition:color .2s}
+.lang button:hover{color:var(--text)}
+.lang button[aria-pressed=true]{background:linear-gradient(160deg,var(--v1),var(--v3));color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}
+
+/* page head */
+.head{display:grid;gap:16px;padding:clamp(32px,5vw,60px) 0 clamp(22px,3vw,34px)}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--pink)}
+.eyebrow svg{font-size:15px}
+h1{margin:0;font-weight:500;font-size:clamp(2.5rem,6.4vw,4.8rem);line-height:1.02;letter-spacing:-.025em;text-wrap:balance}
+h1 em{font-family:var(--serif);font-style:normal;font-weight:600;letter-spacing:0;color:var(--pink)}
+.lede{margin:0;max-width:46ch;font-weight:300;font-size:clamp(1rem,1.4vw,1.15rem);line-height:1.6;color:var(--soft)}
+
+/* scenario cards */
+.scns{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.scn{display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;cursor:pointer;padding:15px 18px;border-radius:16px;border:1px solid var(--line);
+  background:linear-gradient(165deg,var(--surface-2),var(--surface));box-shadow:inset 0 1px 0 rgba(255,255,255,.2);transition:transform .25s var(--e),border-color .25s,background .25s}
+.scn:hover{transform:translateY(-3px);border-color:rgba(205,211,222,.5)}
+.scn b{display:block;font-weight:600;font-size:.98rem;letter-spacing:-.01em}
+.scn small{display:block;margin-top:3px;font-size:.78rem;color:var(--muted)}
+.scn svg{width:12px;height:10px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;color:#CDD3DE;transition:transform .25s var(--e)}
+.scn:hover svg{transform:translateX(3px)}
+.scn.on{border-color:var(--pink);background:linear-gradient(160deg,var(--v2),var(--v3))}
+.scn.on small{color:var(--lav)}
+@media(max-width:900px){.scns{grid-template-columns:1fr}}
+
+/* panels */
+.panel{position:relative;overflow:hidden;border-radius:22px;padding:clamp(20px,2.6vw,30px);border:1px solid var(--card-edge,rgba(255,255,255,.18));
+  box-shadow:0 28px 56px rgba(0,0,0,.6),0 4px 10px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.3)}
+.console{display:grid;grid-template-columns:minmax(0,440px) minmax(0,1fr);gap:16px;align-items:stretch}
+.rcol{display:flex;flex-direction:column;gap:16px;min-width:0}
+@media(max-width:1000px){.console{grid-template-columns:minmax(0,1fr)}}
+
+/* inputs (lavender) */
+.lav{background:linear-gradient(165deg,#F6EEFF,#E6D2FA);color:var(--lav-ink);--card-edge:rgba(255,255,255,.55);display:flex;flex-direction:column;gap:20px}
+.lav h2{margin:0;font-size:1.25rem;font-weight:700;letter-spacing:-.02em}
+.lav .sub{margin:4px 0 0;font-size:.85rem;color:var(--lav-ink3)}
+.lbl{display:block;margin-bottom:8px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--lav-ink3)}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:999px;background:rgba(42,10,82,.09)}
+.seg button{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 8px;border:0;border-radius:999px;background:transparent;cursor:pointer;font-weight:600;font-size:.88rem;color:var(--lav-ink2);transition:background .2s,color .2s}
+.seg button.on{background:var(--v3);color:#fff;box-shadow:0 4px 12px rgba(75,15,134,.35)}
+.seg svg{font-size:15px}
+.field{width:100%;appearance:none;-webkit-appearance:none;padding:13px 40px 13px 14px;border-radius:14px;border:1.5px solid var(--lav-line);background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236A17B0' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 14px center/16px;
+  font:600 .95rem var(--font);color:var(--lav-ink)}
+.field:focus,.bigin:focus-within,.mini:focus-within{border-color:var(--v1);box-shadow:0 0 0 3px rgba(138,27,184,.25)}
+.money{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.bigin,.mini{display:flex;align-items:center;gap:6px;background:#fff;border:1.5px solid var(--lav-line);border-radius:16px;padding:10px 14px}
+.bigin span{font-weight:800;font-size:1.2rem;color:var(--v2)}
+.bigin input{width:100%;min-width:0;border:0;background:transparent;outline:0;font:800 1.45rem/1.1 var(--font);letter-spacing:-.02em;color:var(--lav-ink);-moz-appearance:textfield;font-variant-numeric:tabular-nums}
+.bigin input::-webkit-inner-spin-button,.bigin input::-webkit-outer-spin-button,.mini input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.gain{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:6px 12px;border-radius:99px;font-size:.82rem;font-weight:700;font-variant-numeric:tabular-nums}
+.gain.pos{background:rgba(15,107,71,.13);color:var(--gain-d)}
+.gain.none{background:rgba(75,15,134,.1);color:var(--lav-ink3)}
+.gain.neg{background:rgba(163,25,47,.12);color:var(--risk-d)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{padding:7px 12px;border-radius:99px;border:1px solid var(--lav-line);background:transparent;cursor:pointer;font-size:.78rem;font-weight:600;color:var(--lav-ink2);transition:background .2s,color .2s}
+.chips button:hover{background:rgba(42,10,82,.08)}
+.chips button.on{background:var(--v3);border-color:var(--v3);color:#fff}
+.hold-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.hold-head .rd{font-size:2rem;font-weight:800;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
+.hold-head .rd small{font-size:.85rem;font-weight:600;color:var(--lav-ink3);letter-spacing:0;margin-left:6px}
+.hold-head .rs{font-size:.82rem;font-weight:700;color:var(--v2)}
+.slw{position:relative;padding:14px 0 42px;--f:.39;--g:.71}
+.slw input[type=range]{display:block;width:100%;height:10px;margin:0;border-radius:99px;appearance:none;-webkit-appearance:none;cursor:pointer;
+  background:linear-gradient(90deg,var(--v3) calc(14px + (100% - 28px)*var(--f)),rgba(42,10,82,.18) 0)}
+.slw input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;border-radius:50%;background:#fff;border:7px solid var(--v3);box-shadow:0 3px 10px rgba(42,10,82,.45)}
+.slw input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#fff;border:6px solid var(--v3);box-shadow:0 3px 10px rgba(42,10,82,.45)}
+.slw input[type=range]::-moz-range-track{background:transparent}
+.gate{position:absolute;top:8px;left:calc(14px + (100% - 28px)*var(--g));transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:0;pointer-events:none}
+.gate i{width:3px;height:30px;border-radius:2px;background:var(--hot)}
+.gate span{margin-top:6px;white-space:nowrap;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--hot)}
+.ctrl{display:grid;grid-template-columns:minmax(0,.85fr) auto minmax(0,1.4fr);gap:10px;align-items:center}
+@media(max-width:600px){.ctrl{grid-template-columns:minmax(0,1fr) minmax(0,1.5fr)}.ctrl .or{display:none}}
+.ctrl .or{font-size:.75rem;color:var(--lav-ink3);text-align:center}
+.mini{padding:9px 12px;border-radius:14px}
+.mini b{font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--v2)}
+.mini input{width:100%;min-width:0;border:0;background:transparent;outline:0;font:700 1rem var(--font);color:var(--lav-ink);color-scheme:light;-moz-appearance:textfield}
+.adv{border-top:1px dashed var(--lav-line);padding-top:14px}
+.advbtn{display:flex;align-items:center;justify-content:space-between;width:100%;padding:0;border:0;background:none;cursor:pointer;font-weight:700;font-size:.88rem;color:var(--v2)}
+.advbtn svg{font-size:16px;transition:transform .25s var(--e)}
+.advbtn[aria-expanded=true] svg{transform:rotate(180deg)}
+.advbox{display:grid;gap:14px;padding-top:14px}
+.advbox .hint{margin:6px 0 0;font-size:.76rem;color:var(--lav-ink3)}
+.go{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;height:56px;border:0;border-radius:999px;cursor:pointer;font-weight:700;font-size:1rem;color:#fff;
+  background:linear-gradient(180deg,#5B14A3,#3A0B6A);box-shadow:0 10px 24px rgba(58,11,106,.4),inset 0 1px 0 rgba(255,255,255,.25);transition:filter .18s,transform .18s}
+.go:hover{filter:brightness(1.12)}
+.go:active{transform:translateY(1px)}
+.go svg{width:12px;height:10px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.gonote{margin:-8px 0 0;text-align:center;font-size:.78rem;color:var(--lav-ink3)}
+
+/* verdict (the Home card purple) */
+.verdict{background:linear-gradient(160deg,#8A1BB8 0%,#6A17B0 50%,#4B0F86 100%);color:#fff;--card-edge:rgba(255,194,228,.35);
+  display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px 24px;align-items:center;padding-bottom:0}
+.rcol.rc-empty{align-self:start}
+.vempty{flex:none;justify-content:flex-start;gap:12px;background:linear-gradient(160deg,#8A1BB8 0%,#6A17B0 50%,#4B0F86 100%);color:#fff;--card-edge:rgba(255,194,228,.35)}
+.vempty:not([hidden]){display:flex;flex-direction:column}
+.vempty .vword{font-size:clamp(2.1rem,4.2vw,3rem);line-height:1.08}
+.vempty .ghost{width:min(100%,150px);aspect-ratio:1;margin:10px auto 0;opacity:.5}
+.vempty .ghost svg{display:block;width:100%;height:100%}
+.vempty p{margin:0;max-width:34ch;font-size:1rem;line-height:1.6;color:var(--lav)}
+.verdict.flash{animation:flash .9s var(--e)}
+@keyframes flash{0%{box-shadow:0 0 0 0 rgba(255,194,228,.7),0 28px 56px rgba(0,0,0,.6)}100%{box-shadow:0 0 0 22px rgba(255,194,228,0),0 28px 56px rgba(0,0,0,.6)}}
+.vtop{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.kick{display:flex;align-items:center;gap:7px;font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--pink)}
+.kick svg{font-size:15px}
+.pill{font-size:11px;font-weight:700;padding:5px 11px;border-radius:99px;border:1px solid rgba(241,230,253,.5);color:#fff}
+.vword{margin:2px 0 0;font-family:var(--serif);font-weight:600;font-size:clamp(3.6rem,8vw,6rem);line-height:.92;color:#fff;letter-spacing:.005em}
+.vword.s{font-size:clamp(3rem,6.4vw,4.8rem)}
+.vlab{margin-top:16px;font-size:.9rem;color:var(--lav)}
+.vnum{display:block;white-space:nowrap;margin-top:2px;font-weight:800;font-size:clamp(2.6rem,5.2vw,3.8rem);letter-spacing:-.03em;line-height:1.05;color:var(--pink);font-variant-numeric:tabular-nums}
+.vnote{margin:10px 0 0;max-width:42ch;font-size:.92rem;line-height:1.55;color:var(--lav)}
+.dial{position:relative;width:min(100%,232px);aspect-ratio:1;justify-self:center}
+.dial svg{display:block;width:100%;height:100%}
+.tk{stroke:rgba(255,255,255,.2);stroke-width:3.2;stroke-linecap:round;transition:stroke .3s}
+.tk.f{stroke:var(--pink)}
+.tk.m{stroke:var(--mint)}
+.tk.lead{stroke:#fff}
+.dial .mid{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:2px;text-align:center}
+.dial .mid small{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#E6D3FA}
+.dial .mid b{font-size:3.3rem;line-height:1;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.dial .mid span{font-size:.82rem;color:var(--lav)}
+.rib{grid-column:1/-1;margin:6px -44px 28px;padding:9px 0;text-align:center;background:var(--hot);color:#fff;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;transform:rotate(-1.6deg);box-shadow:0 4px 14px rgba(255,45,138,.45)}
+.rib.ok{background:var(--mint);color:#053429;box-shadow:0 4px 14px rgba(140,242,192,.35)}
+@media(max-width:600px){.verdict{grid-template-columns:minmax(0,1fr)}.rib{margin:6px -34px 26px}}
+.rcol{container-type:inline-size}
+@container (max-width:560px){.verdict{grid-template-columns:minmax(0,1fr)}.rib{margin:6px -34px 26px}}
+
+/* cost chart (deep purple) */
+.deep{background:linear-gradient(165deg,#2A0A52,#1B0836);color:#fff;--card-edge:rgba(255,194,228,.22);flex:1;display:flex;flex-direction:column;gap:10px}
+.deep h3{margin:0;font-size:1.15rem;font-weight:700;letter-spacing:-.015em}
+.deep .sub{margin:3px 0 0;font-size:.84rem;color:#CDB6EE}
+#chartBox{position:relative;flex:1;min-height:262px;touch-action:pan-y;cursor:ew-resize;user-select:none;-webkit-user-select:none;border-radius:12px}
+#chartBox svg{position:absolute;left:0;top:0;display:block}
+.chint{margin:0;font-size:.78rem;color:#CDB6EE}
+#chartPanel.locked #chartBox{pointer-events:none;cursor:default}
+#chartPanel.sample #chartBox{opacity:.4;pointer-events:none;cursor:default;filter:saturate(.8)}
+
+/* head to head */
+.opts{position:relative;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:16px}
+.vs{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:var(--bg);border:1px solid var(--line);font-weight:800;font-size:.78rem;letter-spacing:.06em;color:var(--soft)}
+.opt{display:flex;flex-direction:column;gap:10px;transition:transform .3s var(--e),box-shadow .3s var(--e)}
+.opt:hover{transform:translateY(-4px);box-shadow:0 28px 56px rgba(0,0,0,.6),0 0 0 1px var(--glow),0 18px 60px -12px var(--glow)}
+.opt.glow{box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 0 0 3px var(--glow),0 0 56px 6px var(--glow);animation:glowp 2.8s ease-in-out infinite}
+@keyframes glowp{0%,100%{box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 0 0 3px var(--glow),0 0 38px 3px var(--glow)}50%{box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 0 0 3px var(--glow),0 0 84px 16px var(--glow)}}
+.optA{background:linear-gradient(165deg,#2A0A52,#1B0836);--card-edge:rgba(255,179,165,.35);--glow:rgba(255,179,165,.55);--ink:#fff;--ink2:#E6D3FA;--figure:var(--coral);--ln:rgba(255,255,255,.18)}
+.optB{background:linear-gradient(165deg,#F8CFDD,#EDA6C1);color:#4A1330;--card-edge:rgba(255,255,255,.5);--glow:rgba(255,194,228,.7);--ink:#4A1330;--ink2:#6F2E4D;--figure:#0F6B47;--ln:rgba(74,19,48,.25)}
+.okick{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:24px;font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--ink2)}
+.best{padding:4px 10px;border-radius:99px;background:var(--hot);color:#fff;font-size:10px;letter-spacing:.1em}
+.otitle{margin:0;font-size:1.4rem;font-weight:700;letter-spacing:-.02em;color:var(--ink)}
+.osub{margin-top:-6px;font-size:.84rem;color:var(--ink2)}
+.olab{margin-top:8px;font-size:.82rem;color:var(--ink2)}
+.obig{font-size:clamp(2.6rem,5vw,3.6rem);font-weight:800;letter-spacing:-.035em;line-height:1;color:var(--figure);font-variant-numeric:tabular-nums}
+.okeep{font-size:.92rem;color:var(--ink2)}
+.okeep b{color:var(--ink);font-weight:800}
+.olines{margin:8px 0 0;padding:0;display:grid}
+.olines div{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-top:1px dashed var(--ln);font-size:.9rem}
+.olines dt{color:var(--ink2)}
+.olines dd{margin:0;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+.olines .tot{border-top:1.5px solid var(--ln)}
+.olines .tot dt{color:var(--ink);font-weight:700}
+.olines .tot dd{font-size:1.05rem;font-weight:800}
+.onote{display:flex;gap:8px;align-items:flex-start;margin-top:auto;padding-top:6px;font-size:.78rem;line-height:1.45;color:var(--ink2)}
+.onote svg{font-size:14px;margin-top:1px}
+@media(max-width:760px){.opts{grid-template-columns:minmax(0,1fr)}.vs{display:none}}
+
+/* rules */
+.rules{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:16px}
+.rule{display:flex;flex-direction:column;gap:8px;min-height:216px;transition:transform .3s var(--e),box-shadow .3s var(--e)}
+.rule:hover,.ai:hover,.worth:hover{transform:translateY(-4px);box-shadow:0 28px 56px rgba(0,0,0,.6),0 0 0 1px var(--glow),0 18px 60px -12px var(--glow)}
+.r1{background:linear-gradient(165deg,#6A17B0,#4B0F86 60%,#2A0A52);color:#fff;--card-edge:rgba(255,194,228,.3);--glow:rgba(138,27,184,.7);--c:#E6D3FA;--cc:#fff}
+.r2{background:linear-gradient(160deg,#8A1BB8,#6A17B0);color:#fff;--card-edge:rgba(255,194,228,.35);--glow:rgba(204,70,240,.6);--c:#F1E6FD;--cc:#fff}
+.r3{background:linear-gradient(165deg,#F6EEFF,#E6D2FA);color:var(--lav-ink);--card-edge:rgba(255,255,255,.55);--glow:rgba(227,204,248,.7);--c:var(--lav-ink2);--cc:var(--lav-ink)}
+.rk{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--c)}
+.rtag{white-space:nowrap;padding:3px 9px;border-radius:99px;background:var(--mint);color:#053429;font-size:9.5px;letter-spacing:.08em}
+.rtag.warn{background:var(--amber);color:#2A1A05}
+.hint.warn{color:#8A1F00;font-weight:700}
+.rbig{font-size:3rem;font-weight:800;letter-spacing:-.035em;line-height:1;color:var(--cc);font-variant-numeric:tabular-nums}
+.rule p{margin:0;font-size:.88rem;line-height:1.5;color:var(--c)}
+.rfoot{margin-top:auto;font-size:.78rem;font-weight:700;color:var(--c);opacity:.85}
+@media(max-width:900px){.rules{grid-template-columns:minmax(0,1fr)}.rule{min-height:0}}
+
+/* the bottom line (lavender) */
+.worth{margin-top:16px;background:linear-gradient(165deg,#F6EEFF,#E6D2FA);color:var(--lav-ink);--card-edge:rgba(255,255,255,.55);--glow:rgba(227,204,248,.7);
+  display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:20px 32px;transition:transform .3s var(--e),box-shadow .3s var(--e)}
+.wk{font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--lav-ink3)}
+.whd{margin:6px 0 0;font-size:clamp(1.5rem,2.6vw,2rem);font-weight:700;letter-spacing:-.02em;line-height:1.15;text-wrap:balance}
+.wp{margin:12px 0 0;font-size:.95rem;line-height:1.6;color:var(--lav-ink2)}
+.wcols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.wcol{padding:14px 16px;border-radius:16px;background:#fff;border:1.5px solid var(--lav-line)}
+.wcol.win{border-color:var(--v2);box-shadow:0 0 0 3px rgba(106,23,176,.18)}
+.wcol span{display:block;font-size:.8rem;font-weight:600;color:var(--lav-ink3);line-height:1.35}
+.wcol b{display:block;margin-top:8px;font-size:clamp(1.5rem,2.4vw,2rem);font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.wcol small{display:block;margin-top:2px;font-size:.74rem;color:var(--lav-ink3)}
+.wdiff{margin-top:12px;display:inline-flex;padding:7px 14px;border-radius:99px;font-weight:800;font-size:.9rem;background:var(--v3);color:#fff;font-variant-numeric:tabular-nums}
+.wdiff.sell{background:var(--hot)}
+.wnote{margin:0;font-size:.95rem;line-height:1.6;color:var(--lav-ink2)}
+.worth .wside{display:flex;align-items:center}
+.wfoot{grid-column:1/-1;margin:0;padding-top:12px;border-top:1px dashed var(--lav-line);font-size:.78rem;line-height:1.5;color:var(--lav-ink3)}
+@media(max-width:900px){.worth{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:420px){.wcols{grid-template-columns:minmax(0,1fr)}}
+
+/* plain-words card (yellow, the one card that is not purple or pink) */
+.ai{margin-top:16px;background:linear-gradient(165deg,#FFE066,#FFC91F);color:var(--y-ink);--card-edge:rgba(255,255,255,.55);--glow:rgba(255,224,102,.65);
+  display:grid;gap:12px;transition:transform .3s var(--e),box-shadow .3s var(--e)}
+.aitop{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.aihd{margin:0;font-family:var(--serif);font-weight:600;font-size:clamp(1.7rem,3.4vw,2.5rem);line-height:1.08;color:var(--y-ink)}
+.aichip{padding:4px 11px;border-radius:99px;background:var(--y-ink);color:#FFE066;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase}
+.aitext{margin:0;max-width:68ch;font-size:clamp(1.05rem,1.5vw,1.2rem);line-height:1.65;font-weight:500;color:var(--y-ink)}
+.aisk i{display:block;height:15px;border-radius:8px;margin:12px 0;background:rgba(23,19,10,.16);animation:sh 1s ease-in-out infinite alternate}
+.aisk i:nth-child(1){width:100%}.aisk i:nth-child(2){width:92%}.aisk i:nth-child(3){width:58%}
+@keyframes sh{from{opacity:.45}to{opacity:1}}
+.aifoot{margin:0;font-size:.82rem;font-weight:600;color:var(--y-muted)}
+.ai{scroll-margin-top:24px}
+.aitext.stale{opacity:.55}
+.ainote{margin:0;font-size:.85rem;font-weight:700;line-height:1.5;color:var(--y-ink)}
+.ai:focus{outline:none}
+.aitags{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;flex-shrink:0}
+.aichip2{background:transparent;color:var(--y-ink);box-shadow:inset 0 0 0 1.5px var(--y-ink)}
+
+.disc{display:flex;gap:12px;align-items:flex-start;margin-top:16px;padding:16px 18px;border-radius:16px;border:1px solid var(--line);background:var(--surface);font-size:.85rem;line-height:1.55;color:var(--soft)}
+.disc svg{font-size:18px;color:var(--amber);margin-top:1px}
+.disc p{margin:0}
+
+@media(max-width:380px){.ctrl{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:360px){.money{grid-template-columns:minmax(0,1fr)}}
+/* touch devices and small screens: bigger tap targets */
+@media(pointer:coarse),(max-width:900px){
+  .chips button{min-height:40px;padding:9px 14px}
+  .mini input{min-height:30px}
+  .advbtn{min-height:44px}
+  .lang button{min-height:40px}
+  .foot nav a{display:inline-block;padding:10px 6px}
+}
+/* footer */
+.foot{margin-top:clamp(44px,7vw,80px);border-top:1px solid var(--line);padding:1.75rem 0 2.25rem;text-align:center;color:var(--muted)}
+.foot nav{display:flex;gap:1.6rem;justify-content:center;flex-wrap:wrap;font-size:.9rem;color:var(--soft)}
+.foot nav a:hover{color:var(--text)}
+.foot .cp{margin:1.1rem 0 0;font-size:.85rem}
+.foot small{display:block;max-width:74ch;margin:.7rem auto 0;font-size:.78rem;line-height:1.6}
+
+/* Hindi: no letter-spacing on Devanagari, taller lines for matras, sans heading faces (Playfair has no Devanagari) */
+html[lang=hi] *{letter-spacing:0!important}
+html[lang=hi] body{line-height:1.65}
+html[lang=hi] h1{line-height:1.25}
+html[lang=hi] h1 em,html[lang=hi] .vword,html[lang=hi] .aihd{font-family:var(--font);font-weight:800}
+html[lang=hi] .vword{font-size:clamp(2.6rem,6vw,4.4rem);line-height:1.2}
+html[lang=hi] .aihd{line-height:1.25}
+html[lang=hi] .dial .mid b{font-size:2.8rem}
+
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <a class="logo" href="#home">Return Policy</a>
+    <nav class="nav" aria-label="Main"><a href="#home">Home</a><a href="#about">About Platform</a><a class="on" href="#calculator" aria-current="page">Decision Engine</a></nav>
+  </div>
+</header>
+
+<main class="wrap" id="exit-advisor">
+  <div class="toprow">
+    <div class="tabs" role="tablist" aria-label="Decision Engine tools">
+      <a class="tab" role="tab" href="#calculator"><svg class="i" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg><span class="long">What-If Policy Simulator</span><span class="short">What-if</span></a>
+      <a class="tab on" role="tab" aria-selected="true" href="#exit-advisor"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg><span class="long">Smart Exit &amp; Hold Tax Advisor</span><span class="short">Smart Exit</span></a>
+    </div>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" id="langEn" lang="en" aria-pressed="true">English</button>
+      <button type="button" id="langHi" lang="hi" aria-pressed="false">हिन्दी</button>
+    </div>
+  </div>
+
+  <section class="head" aria-labelledby="h1">
+    <span class="eyebrow"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>Exit advisor</span>
+    <h1 id="h1">Sell today, <em>or wait?</em></h1>
+    <p class="lede">Tell us what you bought and when. We show what selling today costs, and what waiting saves.</p>
+  </section>
+
+  <div class="scns" id="scns" role="group" aria-label="Try a holding"></div>
+
+  <div class="console">
+    <form class="panel lav" id="form" autocomplete="off">
+      <div>
+        <h2>Your fund</h2>
+        <p class="sub">Results update as you type.</p>
+      </div>
+
+      <div>
+        <span class="lbl">Fund type</span>
+        <div class="seg">
+          <button type="button" id="typeEq" aria-pressed="true"><svg class="i" viewBox="0 0 24 24"><path d="M4 17l5-5 4 4 7-8M15 8h5v5"/></svg>Equity fund</button>
+          <button type="button" id="typeDb" aria-pressed="false"><svg class="i" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>Debt fund</button>
+        </div>
+      </div>
+
+      <div>
+        <label class="lbl" for="cat">Fund category</label>
+        <select class="field" id="cat"></select>
+        <p class="hint warn" id="elssNote" hidden>ELSS units are locked in for 3 years and cannot be sold before then. Count from the allotment date on your statement.</p>
+      </div>
+
+      <div>
+        <div class="money">
+          <div><label class="lbl" for="inv">Invested</label><div class="bigin"><span>₹</span><input id="inv" type="number" min="1" step="any" inputmode="decimal" required></div></div>
+          <div><label class="lbl" for="cur">Worth today</label><div class="bigin"><span>₹</span><input id="cur" type="number" min="0" step="any" inputmode="decimal" required></div></div>
+        </div>
+        <span class="gain pos" id="gain">+₹20,000 · +20.0%</span>
+      </div>
+
+      <div>
+        <span class="lbl">Quick invested amount</span>
+        <div class="chips" id="amts"></div>
+      </div>
+
+      <div>
+        <div class="hold-head">
+          <label class="lbl" for="sl" style="margin:0">How long you have held it</label>
+          <span class="rs" id="rs">166 days to go</span>
+        </div>
+        <div class="hold-head" style="margin-top:8px"><span class="rd"><span id="rd">200</span><small>days</small></span></div>
+        <div class="slw" id="slw">
+          <input id="sl" type="range" min="0" max="515" step="1" value="200">
+          <div class="gate" aria-hidden="true"><i></i><span id="gateLbl">Day 366</span></div>
+        </div>
+        <div class="ctrl">
+          <div class="mini"><b>Days</b><input id="daysIn" type="number" min="0" max="5000" inputmode="numeric" aria-label="Days held"></div>
+          <span class="or">or bought on</span>
+          <div class="mini"><input id="dateIn" type="date" aria-label="Purchase date"></div>
+        </div>
+        <div class="chips" id="presets" style="margin-top:12px"></div>
+      </div>
+
+      <div class="adv">
+        <button type="button" class="advbtn" id="advBtn" aria-expanded="false" aria-controls="advBox"><span>Custom exit load and interest rate</span><svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+        <div class="advbox" id="advBox" hidden>
+          <div>
+            <label class="lbl" for="loadIn">Exit load (%)</label>
+            <div class="bigin" style="padding:8px 14px"><input id="loadIn" type="number" step="any" min="0" max="10" placeholder="1.0" inputmode="decimal" style="font-size:1.1rem"><span style="font-size:1rem">%</span></div>
+            <p class="hint" id="loadHintEq">Leave empty and we assume 1% on a sale within a year. That is only an example, because each fund sets its own load. Find yours under “Exit load” in your fund’s SID, KIM or factsheet.</p>
+            <p class="hint" id="loadHintDb" hidden>Leave empty and we assume no exit load. That is an assumption, because some debt funds charge one. Find yours under “Exit load” in your fund’s SID, KIM or factsheet.</p>
+          </div>
+          <div>
+            <label class="lbl" for="rateIn">Money elsewhere would earn (% a year)</label>
+            <div class="bigin" style="padding:8px 14px"><input id="rateIn" type="number" step="any" min="0" max="30" inputmode="decimal" style="font-size:1.1rem"><span style="font-size:1rem">%</span></div>
+            <p class="hint">Starts at SBI's 6.25% a year (deposits of 1 to under 2 years, since 15 Dec 2025). Use your own bank's current rate. Enter 0 to ignore it.</p>
+          </div>
+          <div id="slabWrap" hidden>
+            <label class="lbl" for="slab">Income tax slab</label>
+            <select class="field" id="slab">
+              <option value="5">5% slab</option>
+              <option value="10">10% slab</option>
+              <option value="15">15% slab</option>
+              <option value="20">20% slab</option>
+              <option value="25">25% slab</option>
+              <option value="30" selected>30% slab</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <button class="go" type="submit" id="go">Get my exit advice <svg viewBox="0 0 12 10"><path d="M0.8 5h10M7.1 1.4 10.9 5l-3.8 3.6"/></svg></button>
+      <p class="gonote" id="goNote">Fund value is assumed to stay flat.</p>
+    </form>
+
+    <div class="rcol">
+      <section class="panel verdict" id="verdict" aria-live="polite" aria-labelledby="vWord">
+        <div class="vtop">
+          <span class="kick"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>Our call</span>
+          <span class="pill" id="vPill">STCG · 20% tax</span>
+        </div>
+        <div>
+          <h2 class="vword" id="vWord">Hold</h2>
+          <div class="vlab" id="vLab">Waiting saves you</div>
+          <span class="vnum" id="vNum">₹5,200</span>
+          <p class="vnote" id="vNote"></p>
+        </div>
+        <div class="dial" id="dial" aria-hidden="true">
+          <svg viewBox="0 0 260 260" id="dialSvg"></svg>
+          <div class="mid" id="dMid"></div>
+        </div>
+        <div class="rib" id="vRib">Hold 166 more days</div>
+      </section>
+
+      <section class="panel vempty" id="vEmpty" role="status" hidden>
+        <span class="kick"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>Our call</span>
+        <h2 class="vword s" id="vEmptyH"></h2>
+        <p id="vEmptyP"></p>
+        <div class="ghost" aria-hidden="true"><svg viewBox="0 0 260 260" id="ghostSvg"></svg></div>
+      </section>
+
+      <section class="panel deep" id="chartPanel" aria-labelledby="chH">
+        <div>
+          <h3 id="chH">What selling costs, by day</h3>
+          <p class="sub" id="chSub">Tax plus exit load, if your fund's value stays flat.</p>
+          <h3 id="chH2" hidden>Lock-in progress</h3>
+          <p class="sub" id="chSub2" hidden>ELSS units cannot be sold until the 3 years are over.</p>
+        </div>
+        <div id="chartBox" role="slider" tabindex="0" aria-label="Days held" aria-valuemin="0" aria-valuemax="515" aria-valuenow="200"></div>
+        <p class="chint" id="chDrag">Drag across the chart to try another day.</p>
+        <p class="chint" id="chSample" hidden>Sample shape only. Your own amounts will draw the real chart.</p>
+      </section>
+    </div>
+  </div>
+
+  <section class="opts" id="opts" aria-label="Sell today or wait">
+    <div class="panel opt optA">
+      <div class="okick"><span>Option A</span><span class="best" id="aBest" hidden>Better pick</span></div>
+      <h3 class="otitle">Sell today</h3>
+      <div class="osub" id="aSub">Day 200</div>
+      <div class="olab">What it costs you</div>
+      <div class="obig" id="aBig">₹5,200</div>
+      <div class="okeep">You keep <b id="aKeep">₹1,14,800</b></div>
+      <dl class="olines" id="aLines"></dl>
+      <div class="onote"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.5"/></svg><span id="aNote"></span></div>
+    </div>
+    <span class="vs" aria-hidden="true">VS</span>
+    <div class="panel opt optB">
+      <div class="okick"><span>Option B</span><span class="best" id="bBest" hidden>Better pick</span></div>
+      <h3 class="otitle" id="bTitle">Wait for the gate</h3>
+      <div class="osub" id="bSub">Day 366 and after</div>
+      <div class="olab">What it costs you</div>
+      <div class="obig" id="bBig">₹0</div>
+      <div class="okeep">You keep <b id="bKeep">₹1,20,000</b></div>
+      <dl class="olines" id="bLines"></dl>
+      <div class="onote"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.5"/></svg><span id="bNote"></span></div>
+    </div>
+  </section>
+
+  <section class="panel worth" id="worth" aria-labelledby="wH" hidden>
+    <div>
+      <span class="wk">The bottom line</span>
+      <h3 class="whd" id="wH"></h3>
+    </div>
+    <div class="wside"><p class="wnote" id="wNote"></p></div>
+    <p class="wfoot" id="wFoot"></p>
+  </section>
+
+  <section class="rules" id="rules" aria-label="Rules used"></section>
+
+  <section class="panel ai" id="ai" tabindex="-1" aria-labelledby="aiH" aria-busy="false">
+    <div class="aitop"><h3 class="aihd" id="aiH">Explained in plain words</h3><span class="aitags"><span class="aichip" id="aiChip1"></span><span class="aichip aichip2" id="aiChip" hidden></span></span></div>
+    <p class="aitext" id="aiText"></p>
+    <div class="aisk" id="aiSk" hidden aria-hidden="true"><i></i><i></i><i></i></div>
+    <p class="ainote" id="aiNote"></p>
+    <p class="aifoot">Based only on the numbers above.</p>
+  </section>
+
+  <div class="disc">
+    <svg class="i" viewBox="0 0 24 24"><path d="M12 4l9 16H3z"/><path d="M12 10v4M12 17v.5"/></svg>
+    <p>Tax shown is before 4% cess and any surcharge. Tax rates are taken from published sources as of October 2026, not from the text of the Act, and the exit load is our assumption unless you enter your own. Before you act, confirm the rates on the Income Tax Department website (incometaxindia.gov.in) or with a tax professional, and your fund’s exit load in its SID or KIM.</p>
+  </div>
+</main>
+
+<footer class="foot">
+  <nav aria-label="Footer"><a href="#home">Home</a><a href="#about">About Platform</a><a href="#calculator">Decision Engine</a></nav>
+  <p class="cp">© 2026 Return Policy. AI-powered household finance decision engine.</p>
+  <small>Return Policy is an informational tool, not SEBI-registered financial advice. AI-generated outputs are educational, and the 12% annual return used in projections is illustrative. Consult a qualified financial advisor before major financial decisions.</small>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var FF = 'Plus Jakarta Sans,Noto Sans Devanagari,sans-serif';
+
+  /* ---------- language ---------- */
+  var hi = false;
+  function L(e, h) { return hi ? h : e; }
+
+  /* Hindi for the text that is written into the page markup. Key = the English text exactly. SIP/EMI-style terms follow the What-if page: STCG, LTCG, SEBI, AI, SID, KIM stay Latin; digits stay Latin. */
+  var HI = {
+    'Home': 'होम', 'About Platform': 'प्लेटफ़ॉर्म के बारे में', 'Decision Engine': 'डिसीज़न इंजन',
+    'What-If Policy Simulator': 'व्हाट-इफ़ पॉलिसी सिमुलेटर', 'What-if': 'व्हाट-इफ़',
+    'Smart Exit & Hold Tax Advisor': 'स्मार्ट एग्ज़िट और होल्ड टैक्स सलाहकार', 'Smart Exit': 'स्मार्ट एग्ज़िट',
+    'Exit advisor': 'एग्ज़िट सलाहकार', 'Sell today,': 'आज बेचें,', 'or wait?': 'या रुकें?',
+    'Tell us what you bought and when. We show what selling today costs, and what waiting saves.': 'बताइए आपने क्या ख़रीदा और कब। हम दिखाएँगे कि आज बेचने में कितना ख़र्च है और रुकने से कितनी बचत होती है।',
+    'Your fund': 'आपका फ़ंड', 'Results update as you type.': 'टाइप करते ही नतीजे बदलते हैं।',
+    'Fund type': 'फ़ंड का प्रकार', 'Equity fund': 'इक्विटी फ़ंड', 'Debt fund': 'डेट फ़ंड', 'Fund category': 'फ़ंड की श्रेणी',
+    'Invested': 'निवेश किया', 'Worth today': 'आज का मूल्य', 'Quick invested amount': 'निवेश राशि जल्दी चुनें',
+    'How long you have held it': 'कितने समय से रखा है', 'days': 'दिन', 'Days': 'दिन', 'or bought on': 'या ख़रीद की तारीख़',
+    'Exit load (%)': 'एग्ज़िट लोड (%)',
+    'Money elsewhere would earn (% a year)': 'दूसरी जगह पैसा सालाना कितना कमाएगा (%)',
+    "Starts at SBI's 6.25% a year (deposits of 1 to under 2 years, since 15 Dec 2025). Use your own bank's current rate. Enter 0 to ignore it.": 'SBI की 6.25% सालाना दर से शुरू होता है (1 से 2 वर्ष से कम की जमा, 15 दिसंबर 2025 से)। अपने बैंक की मौजूदा दर डालें। इसे अनदेखा करने के लिए 0 डालें।',
+    'The bottom line': 'कुल मिलाकर',
+    'Leave empty and we assume 1% on a sale within a year. That is only an example, because each fund sets its own load. Find yours under “Exit load” in your fund’s SID, KIM or factsheet.': 'खाली छोड़ें तो हम 1 वर्ष के भीतर बेचने पर 1% मान लेंगे। यह सिर्फ़ एक उदाहरण है, क्योंकि हर फ़ंड का अपना लोड होता है। अपना लोड फ़ंड के SID, KIM या फ़ैक्टशीट में “Exit load” के नीचे देखें।',
+    'Income tax slab': 'इनकम टैक्स स्लैब', '5% slab': '5% स्लैब', '10% slab': '10% स्लैब', '15% slab': '15% स्लैब', '20% slab': '20% स्लैब', '25% slab': '25% स्लैब', '30% slab': '30% स्लैब',
+    'Leave empty and we assume no exit load. That is an assumption, because some debt funds charge one. Find yours under “Exit load” in your fund’s SID, KIM or factsheet.': 'खाली छोड़ें तो हम मान लेंगे कि कोई एग्ज़िट लोड नहीं है। यह एक अनुमान है, क्योंकि कुछ डेट फ़ंड लोड लेते हैं। अपना लोड फ़ंड के SID, KIM या फ़ैक्टशीट में “Exit load” के नीचे देखें।',
+    'ELSS units are locked in for 3 years and cannot be sold before then. Count from the allotment date on your statement.': 'ELSS यूनिट 3 साल के लॉक-इन में रहती हैं और उससे पहले बेची नहीं जा सकतीं। गिनती अपने स्टेटमेंट की अलॉटमेंट तारीख़ से करें।',
+    'Get my exit advice': 'मेरी एग्ज़िट सलाह पाएँ',
+    'Our call': 'हमारी सलाह',
+    'Lock-in progress': 'लॉक-इन की प्रगति', 'ELSS units cannot be sold until the 3 years are over.': 'ELSS यूनिट 3 साल पूरे होने तक बेची नहीं जा सकतीं।',
+    'Sample shape only. Your own amounts will draw the real chart.': 'यह सिर्फ़ नमूना आकार है। आपकी अपनी राशियाँ असली चार्ट बनाएँगी।',
+    'What selling costs, by day': 'किस दिन बेचने पर कितना ख़र्च', "Tax plus exit load, if your fund's value stays flat.": 'टैक्स और एग्ज़िट लोड, अगर फ़ंड का मूल्य स्थिर रहे।',
+    'Drag across the chart to try another day.': 'दूसरा दिन आज़माने के लिए चार्ट पर खींचें।',
+    'Option A': 'विकल्प A', 'Option B': 'विकल्प B', 'Better pick': 'बेहतर चुनाव', 'Sell today': 'आज बेचें',
+    'What it costs you': 'आपका ख़र्च', 'You keep': 'आपके हाथ में',
+    'Explained in plain words': 'आसान शब्दों में', 'Based only on the numbers above.': 'सिर्फ़ ऊपर दिए आँकड़ों पर आधारित।',
+    "Tax shown is before 4% cess and any surcharge. Tax rates are taken from published sources as of October 2026, not from the text of the Act, and the exit load is our assumption unless you enter your own. Before you act, confirm the rates on the Income Tax Department website (incometaxindia.gov.in) or with a tax professional, and your fund’s exit load in its SID or KIM.": 'यहाँ दिखाया टैक्स 4% सेस और किसी भी सरचार्ज से पहले का है। टैक्स की दरें अक्टूबर 2026 तक प्रकाशित स्रोतों से ली गई हैं, अधिनियम के मूल पाठ से नहीं, और जब तक आप अपना लोड न डालें, एग्ज़िट लोड हमारा अनुमान है। कदम उठाने से पहले दरें इनकम टैक्स विभाग की वेबसाइट (incometaxindia.gov.in) या किसी टैक्स विशेषज्ञ से, और अपने फ़ंड का एग्ज़िट लोड उसके SID या KIM में जाँच लें।',
+    '© 2026 Return Policy. AI-powered household finance decision engine.': '© 2026 Return Policy. AI-संचालित घरेलू वित्त निर्णय इंजन।',
+    'Return Policy is an informational tool, not SEBI-registered financial advice. AI-generated outputs are educational, and the 12% annual return used in projections is illustrative. Consult a qualified financial advisor before major financial decisions.': 'Return Policy एक जानकारी देने वाला टूल है, SEBI-पंजीकृत वित्तीय सलाह नहीं। AI से बने नतीजे शैक्षिक हैं, और अनुमानों में इस्तेमाल हुआ 12% सालाना रिटर्न उदाहरण मात्र है। बड़े वित्तीय फ़ैसलों से पहले किसी योग्य वित्तीय सलाहकार से मिलें।'
+  };
+  var CATHI = {
+    'Equity: Flexi Cap / Large Cap': 'इक्विटी: फ्लेक्सी कैप / लार्ज कैप', 'Equity: Mid Cap / Small Cap': 'इक्विटी: मिड कैप / स्मॉल कैप',
+    'Equity: Index / ETF': 'इक्विटी: इंडेक्स / ETF', 'Equity: ELSS (Tax Saver - 3yr lock)': 'इक्विटी: ELSS (टैक्स सेवर, 3 साल लॉक-इन)',
+    'Equity: Sectoral / Thematic': 'इक्विटी: सेक्टोरल / थीमैटिक', 'Equity: General': 'इक्विटी: सामान्य',
+    'Debt: Liquid / Ultra Short Duration': 'डेट: लिक्विड / अल्ट्रा शॉर्ट ड्यूरेशन', 'Debt: Money Market / Low Duration': 'डेट: मनी मार्केट / लो ड्यूरेशन',
+    'Debt: Corporate Bond Fund': 'डेट: कॉर्पोरेट बॉन्ड फ़ंड', 'Debt: Banking & PSU Fund': 'डेट: बैंकिंग और PSU फ़ंड', 'Debt: General': 'डेट: सामान्य'
+  };
+
+  /* Text already in the page markup is found once, then swapped on every language change. Text built by script below uses L(). */
+  var nodes = [];
+  function collect() {
+    var w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, { acceptNode: function (n) {
+      var p = n.parentNode;
+      if (!p || p.nodeName === 'SCRIPT' || p.nodeName === 'STYLE' || !n.nodeValue.trim()) return NodeFilter.FILTER_SKIP;
+      return NodeFilter.FILTER_ACCEPT;
+    } }), n;
+    while ((n = w.nextNode())) nodes.push({ n: n, en: n.nodeValue });
+  }
+  function applyStatic() {
+    nodes.forEach(function (o) {
+      var k = o.en.trim(), h = HI[k];
+      if (!hi) { o.n.nodeValue = o.en; return; }
+      if (h != null) o.n.nodeValue = o.en.replace(k, function () { return h; });
+    });
+  }
+
+  var EQ = ['Equity: Flexi Cap / Large Cap', 'Equity: Mid Cap / Small Cap', 'Equity: Index / ETF', 'Equity: ELSS (Tax Saver - 3yr lock)', 'Equity: Sectoral / Thematic', 'Equity: General'];
+  var DB = ['Debt: Liquid / Ultra Short Duration', 'Debt: Money Market / Low Duration', 'Debt: Corporate Bond Fund', 'Debt: Banking & PSU Fund', 'Debt: General'];
+  /* Days since 1 April 2023. Debt fund units bought after this date are taxed at slab rate whatever the holding period. */
+  var D0 = Math.floor((Date.now() - Date.UTC(2023, 3, 1)) / 86400000);
+  var AMTS = [50000, 100000, 250000, 500000, 1000000];
+  var PRESETS = [[180, '180d · 6M', '180 दिन · 6 माह'], [200, '200d', '200 दिन'], [335, '335d · 11M', '335 दिन · 11 माह'], [365, '365d · 1 yr', '365 दिन · 1 वर्ष'], [400, '400d · LTCG', '400 दिन · LTCG']];
+  var PRESETS_DB = [[90, '90d · 3M', '90 दिन · 3 माह'], [365, '365d · 1 yr', '365 दिन · 1 वर्ष'], [730, '730d · 2 yrs', '730 दिन · 2 वर्ष'], [1095, '1,095d · 3 yrs', '1,095 दिन · 3 वर्ष'], [D0 + 60, 'Before Apr 2023', 'अप्रैल 2023 से पहले']];
+  var PRESETS_ELSS = [[365, '365d · 1 yr', '365 दिन · 1 वर्ष'], [730, '730d · 2 yrs', '730 दिन · 2 वर्ष'], [900, '900d · 2.5 yrs', '900 दिन · 2.5 वर्ष'], [1100, '1,100d · 3 yrs+', '1,100 दिन · 3 वर्ष+']];
+  var presetsFor = '', lockCtx = null;
+  var SCN = {
+    short: { name: ['Short-term equity', 'छोटी अवधि का इक्विटी'], stats: ['Equity · ₹1L to ₹1.2L · 200 days', 'इक्विटी · ₹1L से ₹1.2L · 200 दिन'], type: 'Equity Fund', cat: EQ[0], inv: '100000', cur: '120000', days: 200, load: '' },
+    long:  { name: ['Long-term equity', 'लंबी अवधि का इक्विटी'], stats: ['Equity · ₹1L to ₹3L · 400 days', 'इक्विटी · ₹1L से ₹3L · 400 दिन'], type: 'Equity Fund', cat: EQ[0], inv: '100000', cur: '300000', days: 400, load: '' },
+    debt:  { name: ['Debt fund', 'डेट फ़ंड'], stats: ['Debt · ₹2L to ₹2.25L · 450 days', 'डेट · ₹2L से ₹2.25L · 450 दिन'], type: 'Debt Fund', cat: DB[2], inv: '200000', cur: '225000', days: 450, load: '', slab: '30' }
+  };
+  var S = { type: 'Equity Fund', cat: EQ[0], inv: '100000', cur: '120000', days: 200, load: '', slab: '30', rate: '6.25', adv: false, scn: 'short', checked: false };
+  var drag = false, catFor = '';
+
+  /* Same calculation as calculateLocalExitAnalysis in services/api.js */
+  function calc(inputs) {
+    var amount_invested = Number(inputs.amount_invested) || 0;
+    var current_value = Number(inputs.current_value) || 0;
+    var holding_period_days = Number(inputs.holding_period_days) || 0;
+    var investment_type = inputs.investment_type || 'Equity Fund';
+    var is_equity = investment_type.toLowerCase().indexOf('equity') !== -1;
+    var gain = Math.round((current_value - amount_invested) * 100) / 100;
+    var gain_pct = amount_invested > 0 ? Math.round((gain / amount_invested * 100) * 100) / 100 : 0;
+    var is_gain = gain > 0;
+    var bought_before_apr_2023 = !is_equity && !!inputs.purchased_before_apr_2023;
+    var threshold_days = is_equity ? 365 : 730;
+    var is_short_term = is_equity ? holding_period_days <= threshold_days : (!bought_before_apr_2023 || holding_period_days <= threshold_days);
+    var tax_type = is_short_term ? 'STCG' : 'LTCG';
+    var holding_status = is_short_term ? 'Short-Term' : 'Long-Term';
+    var exit_load_pct = (inputs.exit_load_pct !== undefined && inputs.exit_load_pct !== null && inputs.exit_load_pct !== '')
+      ? Math.max(0, Number(inputs.exit_load_pct))
+      : (is_equity ? (holding_period_days < 365 ? 1.0 : 0.0) : 0.0);
+    var exit_load_amount = Math.round(current_value * (exit_load_pct / 100) * 100) / 100;
+    var current_tax = 0, tax_rate_applied_pct = 0, ltcg_exemption_applied = 0;
+    if (is_equity) {
+      if (is_short_term) {
+        tax_rate_applied_pct = 20.0;
+        current_tax = is_gain ? Math.round(gain * 0.20 * 100) / 100 : 0;
+      } else {
+        tax_rate_applied_pct = 12.5;
+        if (is_gain) {
+          var taxable = Math.max(0, gain - 125000);
+          ltcg_exemption_applied = Math.min(gain, 125000);
+          current_tax = Math.round(taxable * 0.125 * 100) / 100;
+        }
+      }
+    } else {
+      var slab_rate = Number(inputs.applicable_slab_rate_pct) || 30.0;
+      tax_rate_applied_pct = is_short_term ? slab_rate : 12.5;
+      if (is_gain) current_tax = is_short_term ? Math.round(gain * (slab_rate / 100) * 100) / 100 : Math.round(gain * 0.125 * 100) / 100;
+    }
+    var total_cost_now = Math.round((current_tax + exit_load_amount) * 100) / 100;
+    var net_inhand_now = Math.round((current_value - total_cost_now) * 100) / 100;
+    var days_to_ltcg_window = null, projected_tax_if_wait = current_tax, projected_exit_load_if_wait = exit_load_amount;
+    var total_cost_if_wait = total_cost_now, net_inhand_if_wait = net_inhand_now, potential_savings = 0;
+    if (is_equity && is_short_term) {
+      days_to_ltcg_window = Math.max(0, threshold_days + 1 - holding_period_days);
+      projected_exit_load_if_wait = 0.0;
+      projected_tax_if_wait = is_gain ? Math.round(Math.max(0, gain - 125000) * 0.125 * 100) / 100 : 0.0;
+      total_cost_if_wait = Math.round((projected_tax_if_wait + projected_exit_load_if_wait) * 100) / 100;
+      net_inhand_if_wait = Math.round((current_value - total_cost_if_wait) * 100) / 100;
+      potential_savings = Math.max(0, Math.round((total_cost_now - total_cost_if_wait) * 100) / 100);
+    }
+    var recommendation = 'Exit Now';
+    if (is_short_term && total_cost_if_wait < total_cost_now) recommendation = 'Hold';
+    return { investment_type: investment_type, amount_invested: amount_invested, current_value: current_value, holding_period_days: holding_period_days,
+      gain: gain, gain_pct: gain_pct, tax_type: tax_type, holding_status: holding_status, tax_rate_applied_pct: tax_rate_applied_pct, current_tax: current_tax,
+      ltcg_exemption_applied: ltcg_exemption_applied, exit_load_pct: exit_load_pct, exit_load_amount: exit_load_amount, total_cost_now: total_cost_now,
+      net_inhand_now: net_inhand_now, days_to_ltcg_window: days_to_ltcg_window, projected_tax_if_wait: projected_tax_if_wait,
+      projected_exit_load_if_wait: projected_exit_load_if_wait, total_cost_if_wait: total_cost_if_wait, net_inhand_if_wait: net_inhand_if_wait,
+      potential_savings: potential_savings, recommendation: recommendation, bought_before_apr_2023: bought_before_apr_2023 };
+  }
+
+  function isEq() { return S.type === 'Equity Fund'; }
+  function isElss() { return S.type === 'Equity Fund' && S.cat.indexOf('ELSS') !== -1; }
+  function pkey() { return S.type + (isElss() ? '|E' : ''); }
+  var MON_EN = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], MON_HI = ['जनवरी', 'फ़रवरी', 'मार्च', 'अप्रैल', 'मई', 'जून', 'जुलाई', 'अगस्त', 'सितंबर', 'अक्टूबर', 'नवंबर', 'दिसंबर'];
+  function fmtDate(d) { return d.getDate() + ' ' + (hi ? MON_HI : MON_EN)[d.getMonth()] + ' ' + d.getFullYear(); }
+  function thr() { return isEq() ? 365 : D0; }
+  function inputs(days) {
+    var ld = S.load !== '' ? parseFloat(S.load) : null;
+    return { investment_type: S.type, fund_category: S.cat, amount_invested: parseFloat(S.inv) || 0, current_value: parseFloat(S.cur) || 0,
+      holding_period_days: days == null ? S.days : days, purchased_before_apr_2023: (days == null ? S.days : days) > D0, exit_load_pct: (ld !== null && isNaN(ld)) ? null : ld,
+      applicable_slab_rate_pct: isEq() ? 30 : parseFloat(S.slab) };
+  }
+  function inr(n) { return '₹' + Math.round(Math.abs(Number(n) || 0)).toLocaleString('en-IN'); }
+  function dateFor(days) { var d = new Date(); d.setDate(d.getDate() - days); return d.toISOString().split('T')[0]; }
+  function plural(n, w) { return n + ' ' + w + (n === 1 ? '' : 's'); }
+  function catName(c) { return hi ? (CATHI[c] || c) : c; }
+  function row(a, b) { return '<div><dt>' + a + '</dt><dd>' + b + '</dd></div>'; }
+  function rowTot(a, b) { return '<div class="tot"><dt>' + a + '</dt><dd>' + b + '</dd></div>'; }
+
+  /* shrink a big number so it never runs into the card next to it */
+  function fitNum(el, txt) {
+    el.style.fontSize = ''; el.textContent = txt;
+    var w = el.clientWidth, sw = el.scrollWidth;
+    if (w && sw > w) el.style.fontSize = Math.max(16, Math.floor(parseFloat(getComputedStyle(el).fontSize) * w / sw * 0.96)) + 'px';
+  }
+  /* shrink the typed amount so every digit stays visible */
+  function fitIn(el) {
+    el.style.fontSize = '';
+    var w = el.clientWidth, sw = el.scrollWidth;
+    if (w && sw > w) el.style.fontSize = Math.max(12, Math.floor(parseFloat(getComputedStyle(el).fontSize) * w / sw * 0.97)) + 'px';
+  }
+  function refit() { fitIn($('inv')); fitIn($('cur')); fitIn($('daysIn')); [['vNum'], ['aBig'], ['bBig']].forEach(function (a) { var e = $(a[0]); if (e._fmt != null) fitNum(e, e.textContent); }); }
+  function setNum(el, to, fmt) {
+    if (el._raf) cancelAnimationFrame(el._raf);
+    fitNum(el, fmt(to)); el._fmt = 1;
+    var from = el._v == null ? 0 : el._v; el._v = to;
+    if (reduce || drag || from === to) { el.textContent = fmt(to); return; }
+    var t0 = null, dur = 520;
+    function step(t) {
+      if (!t0) t0 = t;
+      var p = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - p, 3);
+      el.textContent = fmt(from + (to - from) * e);
+      if (p < 1) el._raf = requestAnimationFrame(step);
+    }
+    el._raf = requestAnimationFrame(step);
+  }
+
+  /* plain-words text. In the app the AI writes this; this is also the fallback when the AI cannot answer. */
+  function plainText(r, dd, T, short, hold, eq, flip, oc, netWait) {
+    var load = r.exit_load_amount, pt = r.projected_tax_if_wait;
+    if (lockCtx) {
+      return L('Your ELSS units are locked in for 3 years from purchase, so you cannot sell for ' + plural(lockCtx.rem, 'more day') + '. You can sell from ' + fmtDate(lockCtx.date) + '. If your fund’s value stays flat, selling then costs ' + inr(lockCtx.cost) + ' and you would receive ' + inr(lockCtx.keep) + '.',
+        'आपकी ELSS यूनिट ख़रीद से 3 साल के लॉक-इन में हैं, इसलिए ' + lockCtx.rem + ' दिन और नहीं बेच सकते। आप ' + fmtDate(lockCtx.date) + ' से बेच सकेंगे। अगर फ़ंड का मूल्य स्थिर रहा, तब बेचने पर ' + inr(lockCtx.cost) + ' ख़र्च होंगे और आपको ' + inr(lockCtx.keep) + ' मिलेंगे।');
+    }
+    if (!eq) {
+      var why = r.bought_before_apr_2023
+        ? ['These units were bought before 1 April 2023, so gains are taxed at the 12.5% long-term rate.', 'ये यूनिट 1 अप्रैल 2023 से पहले ख़रीदी गई थीं, इसलिए मुनाफ़े पर 12.5% की लंबी अवधि की दर से टैक्स लगता है।']
+        : ['Debt fund units bought on or after 1 April 2023 are taxed at your slab rate, however long you hold them.', 'डेट फ़ंड की जो यूनिट 1 अप्रैल 2023 या उसके बाद ख़रीदी गईं, उन पर रखने की अवधि चाहे जो हो, आपके स्लैब दर से टैक्स लगता है।'];
+      return L(why[0] + ' If you sell today, you pay ' + inr(r.current_tax) + ' in tax' + (load > 0 ? ' and ' + inr(load) + ' in exit load' : '') + '. Waiting will not change the tax. You would receive ' + inr(r.net_inhand_now) + '.',
+        why[1] + ' आज बेचने पर आप ' + inr(r.current_tax) + ' टैक्स' + (load > 0 ? ' और ' + inr(load) + ' एग्ज़िट लोड' : '') + ' देंगे। रुकने से टैक्स नहीं बदलेगा। आपको ' + inr(r.net_inhand_now) + ' मिलेंगे।');
+    }
+    if (flip) {
+      return L('Waiting would save you ' + inr(r.potential_savings) + ' in tax and exit load, but the ' + inr(r.net_inhand_now) + ' you get today could earn about ' + inr(oc) + ' elsewhere in ' + plural(dd, 'day') + '. Selling today comes out ahead by ' + inr(-netWait) + '. This assumes your fund’s value stays flat.',
+        'रुकने से टैक्स और एग्ज़िट लोड में ' + inr(r.potential_savings) + ' बचते, लेकिन आज मिलने वाले ' + inr(r.net_inhand_now) + ' दूसरी जगह ' + dd + ' दिन में लगभग ' + inr(oc) + ' कमा सकते हैं। आज बेचना ' + inr(-netWait) + ' से आगे रहता है। यह मानकर चला गया है कि फ़ंड का मूल्य स्थिर रहेगा।');
+    }
+    if (hold) {
+      var reasonEn = (pt <= 0 && eq && r.gain > 0) ? ", because your gain is within the ₹1.25L tax-free limit" : '';
+      var reasonHi = (pt <= 0 && eq && r.gain > 0) ? ', क्योंकि आपका मुनाफ़ा ₹1.25L की टैक्स-मुक्त सीमा के भीतर है' : '';
+      var en = 'If you sell today, you pay ' + inr(r.current_tax) + ' in ' + r.tax_type + ' tax' + (load > 0 ? ' and ' + inr(load) + ' in exit load' : '') + '. ' +
+        'If you wait ' + plural(dd, 'more day') + ', ' + (load > 0 ? 'the exit load goes away and ' : '') + 'you pay ' + (pt > 0 ? inr(pt) + ' in long-term tax' : 'no tax' + reasonEn) + '. ' +
+        'That saves you ' + inr(r.potential_savings) + '.' + (oc > 0 ? ' Even after about ' + inr(oc) + ' you could earn elsewhere in that time, waiting comes out ahead by ' + inr(netWait) + '.' : '') + ' This assumes your fund’s value stays flat.';
+      var hin = 'आज बेचने पर आप ' + inr(r.current_tax) + ' ' + r.tax_type + ' टैक्स' + (load > 0 ? ' और ' + inr(load) + ' एग्ज़िट लोड' : '') + ' देंगे। ' +
+        'अगर आप ' + dd + ' दिन और रुकते हैं, तो ' + (load > 0 ? 'एग्ज़िट लोड हट जाएगा और ' : '') + (pt > 0 ? 'आपको लंबी अवधि का टैक्स ' + inr(pt) + ' देना होगा' : 'आपको कोई टैक्स नहीं देना होगा' + reasonHi) + '। ' +
+        'इससे आपके ' + inr(r.potential_savings) + ' बचते हैं।' + (oc > 0 ? ' उस दौरान दूसरी जगह लगभग ' + inr(oc) + ' कमाने की संभावना गिनने पर भी रुकना ' + inr(netWait) + ' से आगे रहता है।' : '') + ' यह मानकर चला गया है कि फ़ंड का मूल्य स्थिर रहेगा।';
+      return L(en, hin);
+    }
+    if (short) {
+      return L('Waiting would not make this cheaper. Selling today costs ' + inr(r.total_cost_now) + ', and waiting costs ' + inr(r.total_cost_if_wait) + '. You would receive ' + inr(r.net_inhand_now) + '.',
+        'रुकने से यह सस्ता नहीं होगा। आज बेचने पर ' + inr(r.total_cost_now) + ' ख़र्च होंगे, और रुकने पर ' + inr(r.total_cost_if_wait) + '। आपको ' + inr(r.net_inhand_now) + ' मिलेंगे।');
+    }
+    return L('You are past day ' + T + ', so the ' + r.tax_rate_applied_pct + '% long-term rate applies. Selling now costs ' + inr(r.total_cost_now) + ' in tax and exit load together. Waiting would not make it cheaper. You would receive ' + inr(r.net_inhand_now) + '.',
+      'आप दिन ' + T + ' पार कर चुके हैं, इसलिए ' + r.tax_rate_applied_pct + '% की लंबी अवधि की दर लगेगी। अभी बेचने पर टैक्स और एग्ज़िट लोड मिलाकर ' + inr(r.total_cost_now) + ' लगेगा। रुकने से यह सस्ता नहीं होगा। आपको ' + inr(r.net_inhand_now) + ' मिलेंगे।');
+  }
+  /* The yellow card has three states. quick: the free number-based text, live as you type. ai: the explanation asked for with the button (the live app calls AI here), fixed to the numbers at that moment. stale: the numbers changed after that, so the card says so. */
+  var aiT = null, aiLast = null, aiAsk = false, aiState = null, lastNow = null;
+  function setAI(txt, shimmer) {
+    var box = $('aiText'), sk = $('aiSk'), card = $('ai');
+    if (txt === aiLast && !shimmer) return;
+    aiLast = txt;
+    clearTimeout(aiT);
+    if (!shimmer) { box.textContent = txt; box.hidden = false; sk.hidden = true; card.setAttribute('aria-busy', 'false'); return; }
+    box.hidden = true; sk.hidden = false; card.setAttribute('aria-busy', 'true');
+    aiT = setTimeout(function () { box.textContent = txt; box.hidden = false; sk.hidden = true; card.setAttribute('aria-busy', 'false'); }, 650);
+  }
+
+  /* ---- builders that depend on language ---- */
+  var arrow = '<svg viewBox="0 0 12 10"><path d="M0.8 5h10M7.1 1.4 10.9 5l-3.8 3.6"/></svg>';
+  function buildLang() {
+    $('scns').innerHTML = Object.keys(SCN).map(function (k) {
+      var c = SCN[k];
+      return '<button type="button" class="scn" data-k="' + k + '"><span><b>' + L(c.name[0], c.name[1]) + '</b><small>' + L(c.stats[0], c.stats[1]) + '</small></span>' + arrow + '</button>';
+    }).join('');
+    buildPresets();
+    catFor = '';
+    $('chartBox').setAttribute('aria-label', L('Days held', 'रखे गए दिन'));
+    $('daysIn').setAttribute('aria-label', L('Days held', 'रखे गए दिन'));
+    $('dateIn').setAttribute('aria-label', L('Purchase date', 'ख़रीद की तारीख़'));
+    $('aiChip').textContent = L('Sample', 'नमूना');
+  }
+  function buildPresets() {
+    $('presets').innerHTML = (isElss() ? PRESETS_ELSS : isEq() ? PRESETS : PRESETS_DB).map(function (p) { return '<button type="button" data-d="' + p[0] + '">' + L(p[1], p[2]) + '</button>'; }).join('');
+    presetsFor = pkey();
+  }
+  function buildStatic() {
+    $('amts').innerHTML = AMTS.map(function (a) { return '<button type="button" data-a="' + a + '">₹' + (a >= 100000 ? (a / 100000) + 'L' : (a / 1000) + 'K') + '</button>'; }).join('');
+    var s = '', i;
+    for (i = 0; i < 60; i++) {
+      var a = (-90 + i * 6) * Math.PI / 180, major = i % 5 === 0, r1 = 118, r2 = major ? 98 : 106;
+      s += '<line class="tk" id="tk' + i + '" x1="' + (130 + r1 * Math.cos(a)).toFixed(2) + '" y1="' + (130 + r1 * Math.sin(a)).toFixed(2) + '" x2="' + (130 + r2 * Math.cos(a)).toFixed(2) + '" y2="' + (130 + r2 * Math.sin(a)).toFixed(2) + '" style="transition-delay:' + (i * 9) + 'ms"/>';
+    }
+    $('ghostSvg').innerHTML = '<circle cx="130" cy="130" r="82" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="1"/>' + s.replace(/ id="tk\d+"/g, '').replace(/ style="[^"]*"/g, '');
+    $('dialSvg').innerHTML = '<circle cx="130" cy="130" r="82" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="1"/>' + s;
+  }
+
+  /* ---- render ---- */
+  /* the three rule cards; drawn on every render, including when the amounts are blank, so the language toggle always reaches them */
+  function renderRules(r, eq, short) {
+    // rules
+    var tagYes = '<span class="rtag">' + L('Applies to you', 'आप पर लागू') + '</span>';
+    if (eq) {
+      var ex = r.ltcg_exemption_applied > 0 ? L(' ' + inr(r.ltcg_exemption_applied) + ' of your gain is tax-free.', ' आपके मुनाफ़े के ' + inr(r.ltcg_exemption_applied) + ' टैक्स-मुक्त हैं।') : '';
+      var custLd = S.load !== '' && !isNaN(parseFloat(S.load)), ldTxt = custLd ? parseFloat(S.load) + '%' : '1%';
+      $('rules').innerHTML =
+        '<article class="panel rule r1"><div class="rk"><span>' + L('Held 1 year or less', '1 वर्ष या उससे कम रखा') + '</span>' + (short ? tagYes : '') + '</div><div class="rbig">20%</div><p>' + L('Tax on your gain. Called STCG.', 'आपके मुनाफ़े पर टैक्स। इसे STCG कहते हैं।') + '</p><div class="rfoot">' + L('Rate since 23 July 2024', '23 जुलाई 2024 से लागू दर') + '</div></article>' +
+        '<article class="panel rule r2"><div class="rk"><span>' + L('Held over 1 year', '1 वर्ष से ज़्यादा रखा') + '</span>' + (!short ? tagYes : '') + '</div><div class="rbig">12.5%</div><p>' + L('On gains above ₹1.25L a year. Called LTCG.', 'साल में ₹1.25L से ऊपर के मुनाफ़े पर। इसे LTCG कहते हैं।') + ex + '</p><div class="rfoot">' + L('Rate since 23 July 2024', '23 जुलाई 2024 से लागू दर') + '</div></article>' +
+        '<article class="panel rule r3"><div class="rk"><span>' + L('Exit load', 'एग्ज़िट लोड') + '</span>' + (custLd ? '' : '<span class="rtag warn">' + L('Assumed', 'अनुमान') + '</span>') + '</div><div class="rbig">' + ldTxt + '</div><p>' + (custLd ? L('The load you entered. It is used in the numbers above.', 'यह आपका डाला हुआ लोड है। ऊपर के आँकड़ों में यही इस्तेमाल हुआ है।') : L('We assume 1% on a sale within a year, only as an example. Each fund sets its own, so enter yours under “Custom exit load and interest rate”.', 'हम 1 वर्ष के भीतर बेचने पर 1% मान लेते हैं, सिर्फ़ उदाहरण के लिए। हर फ़ंड का अपना लोड होता है, इसलिए अपना लोड “अपना एग्ज़िट लोड और ब्याज दर” में डालें।')) + '</p><div class="rfoot">' + (custLd ? L('Check it in the SID, KIM or factsheet', 'SID, KIM या फ़ैक्टशीट में जाँचें') : L('Find yours in the SID, KIM or factsheet', 'अपना लोड SID, KIM या फ़ैक्टशीट में देखें')) + '</div></article>';
+    } else {
+      var slabTxt = (parseFloat(S.slab) || 30) + '%', pre = r.bought_before_apr_2023;
+      $('rules').innerHTML =
+        '<article class="panel rule r1"><div class="rk"><span>' + L('Bought from 1 Apr 2023', '1 अप्रैल 2023 से ख़रीदा') + '</span>' + (!pre ? tagYes : '') + '</div><div class="rbig">' + slabTxt + '</div><p>' + L('Taxed at your income tax slab, however long you hold the fund.', 'रखने की अवधि चाहे जो हो, आपके इनकम टैक्स स्लैब से टैक्स लगता है।') + '</p><div class="rfoot">' + L('Slab rate', 'स्लैब दर') + '</div></article>' +
+        '<article class="panel rule r2"><div class="rk"><span>' + L('Bought before 1 Apr 2023', '1 अप्रैल 2023 से पहले ख़रीदा') + '</span>' + (pre ? tagYes : '') + '</div><div class="rbig">12.5%</div><p>' + L('Long-term rate after 24 months, with no indexation benefit.', '24 महीने के बाद लंबी अवधि की दर, इंडेक्सेशन के फ़ायदे के बिना।') + '</p><div class="rfoot">' + L('Rate since 23 July 2024', '23 जुलाई 2024 से लागू दर') + '</div></article>' +
+        '<article class="panel rule r3"><div class="rk"><span>' + L('Check your fund', 'अपना फ़ंड जाँचें') + '</span><span class="rtag warn">' + L('Verify', 'जाँचें') + '</span></div><div class="rbig">65%</div><p>' + L('These rules are for funds that put more than 65% of their money in debt and money market instruments. Hybrid, gold and international funds can be taxed differently.', 'ये नियम उन फ़ंड के लिए हैं जो 65% से ज़्यादा पैसा डेट और मनी मार्केट साधनों में लगाते हैं। हाइब्रिड, गोल्ड और इंटरनेशनल फ़ंड पर टैक्स अलग हो सकता है।') + '</p><div class="rfoot">' + L('Check the SID or factsheet for the debt share', 'डेट हिस्सेदारी के लिए SID या फ़ैक्टशीट देखें') + '</div></article>';
+    }
+  }
+
+  function render() {
+    var r = calc(inputs()), T = thr(), eq = isEq(), short = r.holding_status === 'Short-Term', taxHold = r.recommendation === 'Hold';
+    var xmax = T + 150;
+    /* Opportunity cost: the money you would get today, earning simple interest elsewhere for the days you would wait. The tax-only call from calc() stays as it is; the final call below also counts this. */
+    var dd = Math.max(1, r.days_to_ltcg_window || 0);
+    var rate = parseFloat(S.rate); if (isNaN(rate) || rate < 0) rate = 0;
+    var oc = taxHold ? Math.round(r.net_inhand_now * rate / 100 * dd / 365) : 0;
+    var netWait = r.potential_savings - oc;
+    var hold = taxHold && netWait >= 1, flip = taxHold && !hold;
+    var debt = !eq, gate = eq && short;
+    /* ELSS: the 3 years end on the third anniversary of the purchase date */
+    var elss = isElss(), unlockD = null, rem = 0;
+    if (elss) { var t0 = new Date(), td = new Date(t0.getFullYear(), t0.getMonth(), t0.getDate()), pd = new Date(td.getFullYear(), td.getMonth(), td.getDate() - S.days); unlockD = new Date(pd.getFullYear() + 3, pd.getMonth(), pd.getDate()); rem = Math.round((unlockD - td) / 86400000); }
+    var lock = elss && rem > 0; if (!lock) rem = 0;
+    var sMax = elss ? 1245 : xmax;
+
+    // inputs
+    $('typeEq').classList.toggle('on', eq); $('typeEq').setAttribute('aria-pressed', eq);
+    $('typeDb').classList.toggle('on', !eq); $('typeDb').setAttribute('aria-pressed', !eq);
+    if (catFor !== S.type) {
+      $('cat').innerHTML = (eq ? EQ : DB).map(function (c) { return '<option value="' + c + '">' + catName(c) + '</option>'; }).join(''); catFor = S.type;
+    }
+    if (presetsFor !== pkey()) buildPresets();
+    $('cat').value = S.cat;
+    if (document.activeElement !== $('inv')) $('inv').value = S.inv;
+    if (document.activeElement !== $('cur')) $('cur').value = S.cur;
+    fitIn($('inv')); fitIn($('cur'));
+    var raw = (parseFloat(S.cur) || 0) - (parseFloat(S.inv) || 0), invN = parseFloat(S.inv) || 0;
+    var g = $('gain'); g.className = 'gain ' + (raw >= 0 ? 'pos' : 'neg');
+    g.textContent = (raw >= 0 ? '+' : '-') + inr(raw) + ' · ' + (raw >= 0 ? '+' : '-') + (invN > 0 ? Math.abs(raw / invN * 100).toFixed(1) : '0.0') + '%';
+    Array.prototype.forEach.call($('amts').children, function (b) { b.classList.toggle('on', Number(S.inv) === Number(b.dataset.a)); });
+    $('sl').max = sMax; $('sl').value = S.days; $('sl').setAttribute('aria-valuenow', S.days);
+    $('slw').style.setProperty('--f', Math.min(1, S.days / sMax).toFixed(4));
+    $('slw').style.setProperty('--g', ((elss ? 1095 : T) / sMax).toFixed(4));
+    $('gateLbl').textContent = elss ? L('Lock-in ends', 'लॉक-इन ख़त्म') : debt ? L('1 Apr 2023', '1 अप्रैल 2023') : L('Day ' + (T + 1), 'दिन ' + (T + 1));
+    $('rd').textContent = S.days;
+    $('rs').textContent = S.days > T ? L('Past the gate', 'सीमा पार') : L(plural(T + 1 - S.days, 'day') + ' to go', (T + 1 - S.days) + ' दिन बाकी');
+    if (debt) $('rs').textContent = S.days > T ? L('Bought before 1 Apr 2023', 'ख़रीद 1 अप्रैल 2023 से पहले') : L('Bought on or after 1 Apr 2023', 'ख़रीद 1 अप्रैल 2023 या उसके बाद');
+    if (elss) $('rs').textContent = lock ? L(plural(rem, 'day') + ' of lock-in left', rem + ' दिन का लॉक-इन बाकी') : L('Lock-in is over', 'लॉक-इन ख़त्म');
+    if (document.activeElement !== $('daysIn')) $('daysIn').value = S.days;
+    fitIn($('daysIn'));
+    if (document.activeElement !== $('dateIn')) $('dateIn').value = dateFor(S.days);
+    $('dateIn').max = dateFor(0);
+    Array.prototype.forEach.call($('presets').children, function (b) { b.classList.toggle('on', Number(b.dataset.d) === S.days); });
+    $('advBtn').setAttribute('aria-expanded', S.adv); $('advBox').hidden = !S.adv;
+    $('advBtn').firstElementChild.textContent = eq ? L('Custom exit load and interest rate', 'अपना एग्ज़िट लोड और ब्याज दर') : L('Custom exit load, tax slab and interest rate', 'अपना एग्ज़िट लोड, टैक्स स्लैब और ब्याज दर');
+    $('loadHintEq').hidden = !eq; $('loadHintDb').hidden = eq;
+    var ldSet = S.load !== '' && !isNaN(parseFloat(S.load));
+    $('loadHintEq').textContent = ldSet ? L('Using the load you entered.', 'आपके डाले हुए लोड का इस्तेमाल हो रहा है।') : L('Leave empty and we assume 1% on a sale within a year.', 'खाली छोड़ें तो हम 1 वर्ष के भीतर बेचने पर 1% मान लेंगे।');
+    $('loadHintDb').textContent = ldSet ? L('Using the load you entered.', 'आपके डाले हुए लोड का इस्तेमाल हो रहा है।') : L('Leave empty and we assume no exit load.', 'खाली छोड़ें तो हम मान लेंगे कि कोई एग्ज़िट लोड नहीं है।');
+    $('elssNote').hidden = !lock;
+    $('slabWrap').hidden = eq; if (document.activeElement !== $('slab')) $('slab').value = S.slab;
+    if (document.activeElement !== $('loadIn')) $('loadIn').value = S.load;
+    if (document.activeElement !== $('rateIn')) $('rateIn').value = S.rate;
+    Array.prototype.forEach.call($('scns').children, function (b) { b.classList.toggle('on', b.dataset.k === S.scn); });
+    $('goNote').textContent = S.checked
+      ? L('Checked just now. Fund value is assumed to stay flat.', 'अभी जाँचा गया। मान लिया गया है कि फ़ंड का मूल्य स्थिर रहेगा।')
+      : L('Fund value is assumed to stay flat.', 'मान लिया गया है कि फ़ंड का मूल्य स्थिर रहेगा।');
+
+    // nothing to judge until both amounts are filled in
+    var invMiss = !(parseFloat(S.inv) > 0), curMiss = S.cur === '' || isNaN(parseFloat(S.cur));
+    var emptyIn = invMiss || curMiss;
+    var lockUI = lock && !emptyIn;
+    $('vEmpty').parentNode.classList.toggle('rc-empty', emptyIn);
+    $('vEmpty').hidden = !emptyIn; $('verdict').hidden = emptyIn; $('chartPanel').hidden = false; $('chartPanel').classList.toggle('sample', emptyIn); $('chDrag').hidden = emptyIn || lockUI; $('chSample').hidden = !emptyIn; $('opts').hidden = emptyIn || lockUI;
+    $('chartPanel').classList.toggle('locked', lockUI); $('chH').hidden = lockUI; $('chSub').hidden = lockUI; $('chH2').hidden = !lockUI; $('chSub2').hidden = !lockUI;
+    if (emptyIn) {
+      /* say exactly what is missing */
+      var K = invMiss && curMiss ? 0 : (invMiss ? 1 : 2);
+      var MSG = [
+        [['Enter both amounts', 'दोनों राशियाँ डालें'], ['Enter your amounts', 'अपनी राशियाँ डालें'],
+          ['Tell us what you invested and what it is worth today. Our call, the cost chart and the comparison appear here.', 'बताइए आपने कितना निवेश किया और आज उसका मूल्य क्या है। हमारी सलाह, लागत का चार्ट और तुलना यहीं दिखेगी।'],
+          ['Enter what you invested and what it is worth today, and we will explain your result here.', 'आपने कितना निवेश किया और आज उसका मूल्य क्या है, यह डालें। नतीजा हम यहाँ समझाएँगे।']],
+        [['Enter what you invested', 'आपने कितना निवेश किया, यह डालें'], ['Enter what you invested', 'आपने कितना निवेश किया, यह डालें'],
+          ['Worth today is filled in. Add how much you invested, and our call, the cost chart and the comparison appear here.', 'आज का मूल्य भर दिया गया है। बताइए आपने कितना निवेश किया, फिर हमारी सलाह, लागत का चार्ट और तुलना यहीं दिखेगी।'],
+          ['Add what you invested and we will explain your result here.', 'आपने कितना निवेश किया, यह डालें। नतीजा हम यहाँ समझाएँगे।']],
+        [['Enter what it is worth today', 'आज उसका मूल्य क्या है, यह डालें'], ['Enter what it is worth today', 'आज उसका मूल्य क्या है, यह डालें'],
+          ['Invested is filled in. Add what the fund is worth today, and our call, the cost chart and the comparison appear here.', 'निवेश की राशि भर दी गई है। बताइए आज फ़ंड का मूल्य क्या है, फिर हमारी सलाह, लागत का चार्ट और तुलना यहीं दिखेगी।'],
+          ['Add what it is worth today and we will explain your result here.', 'आज उसका मूल्य क्या है, यह डालें। नतीजा हम यहाँ समझाएँगे।']]
+      ][K];
+      g.className = 'gain none'; g.textContent = L(MSG[0][0], MSG[0][1]);
+      $('vEmptyH').textContent = L(MSG[1][0], MSG[1][1]); $('vEmptyP').textContent = L(MSG[2][0], MSG[2][1]);
+      $('worth').hidden = true;
+      renderRules(r, eq, short);
+      drawChart();
+      setAI(L(MSG[3][0], MSG[3][1]), false);
+      $('aiChip1').textContent = L('Quick summary', 'त्वरित सार'); $('aiChip').hidden = true; $('aiText').classList.remove('stale'); $('aiNote').hidden = true;
+      return;
+    }
+
+    // verdict
+    $('vPill').textContent = lock ? L('3-year lock-in', '3 साल का लॉक-इन') : L(r.tax_type + ' · ' + r.tax_rate_applied_pct + '% tax', r.tax_type + ' · ' + r.tax_rate_applied_pct + '% टैक्स');
+    var word = $('vWord'); word.textContent = lock ? L('Can’t sell yet', 'अभी नहीं बेच सकते') : hold ? L('Hold', 'होल्ड करें') : L('Exit now', 'अभी बेचें'); word.classList.toggle('s', !hold);
+    var rib = $('vRib');
+    var after = calc(inputs(1095)), unlock = unlockD;
+    lockCtx = lock ? { rem: rem, date: unlock, cost: after.total_cost_now, keep: after.net_inhand_now } : null;
+    if (lock) {
+      $('vLab').textContent = L('Lock-in ends in', 'लॉक-इन ख़त्म होने में');
+      setNum($('vNum'), rem, function (n) { return L(Math.round(n) + (Math.round(n) === 1 ? ' day' : ' days'), Math.round(n) + ' दिन'); });
+      $('vNote').textContent = L('ELSS units are locked in for 3 years from the date you bought them, so you cannot sell yet. You can sell from ' + fmtDate(unlock) + '. If your fund’s value stays flat, selling then would cost ' + inr(after.total_cost_now) + ' and you would receive ' + inr(after.net_inhand_now) + '.',
+        'ELSS यूनिट ख़रीद की तारीख़ से 3 साल के लॉक-इन में रहती हैं, इसलिए अभी बेच नहीं सकते। आप ' + fmtDate(unlock) + ' से बेच सकेंगे। अगर फ़ंड का मूल्य स्थिर रहा, तब बेचने पर ' + inr(after.total_cost_now) + ' ख़र्च होंगे और आपको ' + inr(after.net_inhand_now) + ' मिलेंगे।');
+      rib.className = 'rib'; rib.textContent = L('Locked for ' + plural(rem, 'more day'), rem + ' दिन और लॉक-इन');
+    } else if (hold) {
+      $('vLab').textContent = L('Tax and load saved by waiting', 'रुकने से टैक्स और लोड में बचत');
+      setNum($('vNum'), r.potential_savings, inr);
+      $('vNote').textContent = L(
+        'Selling today costs ' + inr(r.current_tax) + ' in tax' + (r.exit_load_amount > 0 ? ' and ' + inr(r.exit_load_amount) + ' in exit load' : '') + '. After ' + plural(dd, 'more day') + ', ' + (r.exit_load_amount > 0 ? 'the exit load goes and ' : '') + 'the tax drops to the long-term rate.',
+        'आज बेचने पर ' + inr(r.current_tax) + ' टैक्स' + (r.exit_load_amount > 0 ? ' और ' + inr(r.exit_load_amount) + ' एग्ज़िट लोड' : '') + ' लगेगा। ' + dd + ' दिन और रुकने पर ' + (r.exit_load_amount > 0 ? 'एग्ज़िट लोड हट जाएगा और ' : '') + 'टैक्स लंबी अवधि की दर पर आ जाएगा।');
+      rib.className = 'rib'; rib.textContent = L('Hold ' + plural(dd, 'more day'), dd + ' दिन और रुकें');
+    } else {
+      $('vLab').textContent = L('You receive if you sell today', 'आज बेचने पर आपको मिलेंगे');
+      setNum($('vNum'), r.net_inhand_now, inr);
+      $('vNote').textContent = short
+        ? (flip
+          ? L('Waiting saves ' + inr(r.potential_savings) + ' in tax and exit load, but the money you get today could earn about ' + inr(oc) + ' elsewhere in ' + plural(dd, 'day') + '. Selling now comes out ahead.',
+              'रुकने से ' + inr(r.potential_savings) + ' टैक्स और एग्ज़िट लोड बचता है, लेकिन आज मिलने वाला पैसा दूसरी जगह ' + dd + ' दिन में लगभग ' + inr(oc) + ' कमा सकता है। अभी बेचना आगे रहता है।')
+          : L('Waiting would not lower what you pay on this fund, so there is nothing to gain by holding on.', 'रुकने से इस फ़ंड पर आपका ख़र्च कम नहीं होगा, इसलिए रुकने का कोई फ़ायदा नहीं।'))
+        : L('You are past day ' + T + ', so the long-term rate applies and the exit load is gone. Waiting will not make this cheaper.', 'आप दिन ' + T + ' पार कर चुके हैं, इसलिए लंबी अवधि की दर लगेगी और एग्ज़िट लोड हट चुका है। रुकने से यह सस्ता नहीं होगा।');
+      rib.className = 'rib ok';
+      rib.textContent = short ? (flip ? L('Waiting does not pay', 'रुकना फ़ायदे का नहीं') : L('Waiting saves ₹0', 'रुकने से ₹0 की बचत')) : L('Past day ' + T + '. Sell when you need to', 'दिन ' + T + ' पार। ज़रूरत हो तब बेचें');
+      if (debt) {
+        $('vNote').textContent = r.bought_before_apr_2023
+          ? L('These units were bought before 1 April 2023, so the 12.5% long-term rate applies. Waiting will not change your tax.', 'ये यूनिट 1 अप्रैल 2023 से पहले ख़रीदी गई थीं, इसलिए 12.5% की लंबी अवधि की दर लगती है। रुकने से आपका टैक्स नहीं बदलेगा।')
+          : L('Debt fund units bought on or after 1 April 2023 are taxed at your slab rate, however long you hold them. Waiting will not lower the tax.', 'डेट फ़ंड की जो यूनिट 1 अप्रैल 2023 या उसके बाद ख़रीदी गईं, उन पर रखने की अवधि चाहे जो हो, आपके स्लैब दर से टैक्स लगता है। रुकने से टैक्स कम नहीं होगा।');
+        rib.textContent = L('Waiting does not change your tax', 'रुकने से टैक्स नहीं बदलता');
+      }
+    }
+
+    // dial
+    var past = !lock && (debt || S.days > T), filled = lock ? Math.round(S.days / 1095 * 60) : past ? 60 : Math.round(Math.min(1, S.days / T) * 60), i, el;
+    for (i = 0; i < 60; i++) {
+      el = $('tk' + i);
+      el.setAttribute('class', 'tk' + (i < filled ? (past ? ' m' : ' f') : '') + (i === filled - 1 && !past ? ' lead' : ''));
+    }
+    var dsm = '<small>' + (lock ? L('Day ' + S.days + ' of 1,095', 'दिन ' + S.days + ' / 1,095') : L('Day ' + S.days + ' of ' + T, 'दिन ' + S.days + ' / ' + T)) + '</small>';
+    $('dMid').innerHTML = lock ? dsm + '<b>' + rem + '</b><span>' + L(rem === 1 ? 'day of lock-in' : 'days of lock-in', 'दिन का लॉक-इन') + '</span>' : past
+      ? dsm + '<b>' + L('Open', 'खुला') + '</b><span>' + L('long-term window', 'लंबी अवधि शुरू') + '</span>'
+      : dsm + '<b>' + dd + '</b><span>' + L(dd === 1 ? 'day to go' : 'days to go', 'दिन बाकी') + '</span>';
+    if (debt) $('dMid').innerHTML = '<small>' + L('Debt fund', 'डेट फ़ंड') + '</small><b>' + L('Flat', 'समान') + '</b><span>' + L('same tax any day', 'किसी भी दिन समान टैक्स') + '</span>';
+
+    // options
+    setNum($('aBig'), r.total_cost_now, inr); $('aKeep').textContent = inr(r.net_inhand_now);
+    $('aSub').textContent = L('Day ' + S.days, 'दिन ' + S.days);
+    var lineA = row(L(r.tax_type + ' tax (' + r.tax_rate_applied_pct + '%)', r.tax_type + ' टैक्स (' + r.tax_rate_applied_pct + '%)'), inr(r.current_tax)) +
+      row(L('Exit load (' + r.exit_load_pct + '%)', 'एग्ज़िट लोड (' + r.exit_load_pct + '%)'), inr(r.exit_load_amount));
+    if (r.ltcg_exemption_applied > 0) lineA += row(L('Tax-free part of your gain', 'आपके मुनाफ़े का टैक्स-मुक्त हिस्सा'), inr(r.ltcg_exemption_applied));
+    if (taxHold) lineA += (oc > 0 ? row(L('Interest elsewhere (' + rate + '% for ' + plural(dd, 'day') + ')', 'दूसरी जगह ब्याज (' + rate + '%, ' + dd + ' दिन)'), '+' + inr(oc)) : '') +
+      rowTot(L('You have after ' + plural(dd, 'day'), dd + ' दिन बाद आपके पास'), inr(r.net_inhand_now + oc));
+    $('aLines').innerHTML = lineA;
+    $('aNote').textContent = L('Taken out of ' + inr(r.current_value) + ', what your fund is worth today.', inr(r.current_value) + ' में से, जो आज आपके फ़ंड का मूल्य है।');
+    setNum($('bBig'), r.total_cost_if_wait, inr); $('bKeep').textContent = inr(r.net_inhand_if_wait);
+    $('bTitle').textContent = gate ? L('Wait for the gate', 'सीमा तक रुकें') : L('Wait longer', 'और रुकें');
+    $('bSub').textContent = gate ? L('Day ' + (T + 1) + ' and after', 'दिन ' + (T + 1) + ' और उसके बाद') : L('Already past the gate', 'सीमा पहले ही पार');
+    $('bLines').innerHTML = gate
+      ? row(L('Long-term tax (12.5%)', 'लंबी अवधि का टैक्स (12.5%)'), inr(r.projected_tax_if_wait)) + row(L('Exit load after the gate', 'सीमा के बाद एग्ज़िट लोड'), inr(r.projected_exit_load_if_wait)) +
+        (taxHold ? rowTot(L('You have after ' + plural(dd, 'day'), dd + ' दिन बाद आपके पास'), inr(r.net_inhand_if_wait)) : '')
+      : row(L(r.tax_type + ' tax (' + r.tax_rate_applied_pct + '%)', r.tax_type + ' टैक्स (' + r.tax_rate_applied_pct + '%)'), inr(r.current_tax)) + row(L('Exit load (' + r.exit_load_pct + '%)', 'एग्ज़िट लोड (' + r.exit_load_pct + '%)'), inr(r.exit_load_amount));
+    $('bNote').textContent = gate
+      ? L('Assumes the fund’s value stays flat. Real returns will move.', 'मान लिया गया है कि फ़ंड का मूल्य स्थिर रहेगा। असली रिटर्न बदलेगा।') +
+        (taxHold ? L(' Interest uses the rate in your custom settings.', ' ब्याज के लिए कस्टम सेटिंग की दर इस्तेमाल हुई है।') : '')
+      : L('Nothing changes after the gate, so there is no reason to wait for tax.', 'सीमा के बाद कुछ नहीं बदलता, इसलिए टैक्स के लिए रुकने की ज़रूरत नहीं।');
+    if (debt) { $('bTitle').textContent = L('Wait, then sell', 'रुकें, फिर बेचें'); $('bSub').textContent = L('Any later day', 'बाद का कोई भी दिन'); $('bNote').textContent = L('Nothing changes if you wait, so there is no reason to wait for tax.', 'रुकने से कुछ नहीं बदलता, इसलिए टैक्स के लिए रुकने की ज़रूरत नहीं।'); }
+    $('aBest').hidden = hold; $('bBest').hidden = !hold;
+    $('aBest').closest('.opt').classList.toggle('glow', !hold); $('bBest').closest('.opt').classList.toggle('glow', hold);
+
+    // the bottom line: always shown, except while an ELSS lock-in stops any sale
+    $('worth').hidden = lock;
+    if (!lock && taxHold) {
+      var pct = r.current_value > 0 ? (Math.abs(netWait) / r.current_value * 100).toFixed(1) : '0.0';
+      $('wH').textContent = hold ? L('Waiting wins by ' + inr(netWait), 'रुकना ' + inr(netWait) + ' से आगे') : L('Selling today wins by ' + inr(-netWait), 'आज बेचना ' + inr(-netWait) + ' से आगे');
+      $('wNote').hidden = !hold;
+      $('wNote').textContent = L('Waiting still pays if your fund falls by less than ' + inr(netWait) + ' (' + pct + '% of its value) before then. A bigger fall can wipe out the gain.',
+        'अगर तब तक आपके फ़ंड का मूल्य ' + inr(netWait) + ' (' + pct + '%) से कम गिरता है, तो रुकना फिर भी फ़ायदे का है। इससे बड़ी गिरावट पूरा फ़ायदा मिटा सकती है।');
+      $('wFoot').textContent = L('Interest is simple interest at ' + rate + '% a year, before tax on that interest. Your fund is assumed to stay flat. You can change the rate in the custom settings.',
+        'ब्याज साधारण ब्याज है, ' + rate + '% सालाना, उस ब्याज पर टैक्स से पहले। मान लिया गया है कि फ़ंड का मूल्य स्थिर रहेगा। दर कस्टम सेटिंग में बदल सकते हैं।');
+    } else if (!lock) {
+      var ld0 = r.exit_load_amount > 0;
+      $('wH').textContent = L('Waiting saves ₹0', 'रुकने से ₹0 की बचत');
+      $('wNote').hidden = false;
+      $('wNote').textContent = L('Selling today costs ' + inr(r.total_cost_now) + (ld0 ? ' in tax and exit load together' : ' in tax') + ', so you receive ' + inr(r.net_inhand_now) + '. Waiting does not change this, so sell when you need the money.',
+        'आज बेचने पर ' + inr(r.total_cost_now) + (ld0 ? ' टैक्स और एग्ज़िट लोड मिलाकर' : ' टैक्स') + ' लगेगा, इसलिए आपको ' + inr(r.net_inhand_now) + ' मिलेंगे। रुकने से यह नहीं बदलेगा, इसलिए ज़रूरत हो तब बेचें।');
+      $('wFoot').textContent = L('Your fund is assumed to stay flat. Real returns will move.', 'मान लिया गया है कि फ़ंड का मूल्य स्थिर रहेगा। असली रिटर्न बदलेगा।');
+    }
+
+    renderRules(lock ? after : r, eq, lock ? false : short);   /* while locked, show the rule that applies once the lock ends */
+
+    var keepHi = hi; hi = false; var tEn = plainText(r, dd, T, short, hold, eq, flip, oc, netWait); hi = true; var tHi = plainText(r, dd, T, short, hold, eq, flip, oc, netWait); hi = keepHi;
+    var sigNow = [S.type, S.cat, S.inv, S.cur, S.days, S.load, S.slab, S.rate].join('|');
+    lastNow = { sig: sigNow, en: tEn, hi: tHi };
+    var mode = !aiState ? 'quick' : (aiState.sig === sigNow ? 'ai' : 'stale');
+    setAI(mode === 'quick' ? (hi ? tHi : tEn) : (hi ? aiState.hi : aiState.en), aiAsk); aiAsk = false;
+    $('aiChip1').textContent = mode === 'quick' ? L('Quick summary', 'त्वरित सार') : L('AI Advisor', 'AI सलाहकार');
+    var c2 = $('aiChip'); c2.hidden = mode === 'quick'; c2.textContent = mode === 'stale' ? L('Out of date', 'पुराना') : L('Sample', 'नमूना');
+    $('aiText').classList.toggle('stale', mode === 'stale');
+    var nt = $('aiNote'); nt.hidden = mode === 'ai';
+    nt.textContent = mode === 'stale'
+      ? L('Your numbers changed. Press “Get my exit advice” to refresh this explanation.', 'आपके आँकड़े बदल गए हैं। इस व्याख्या को ताज़ा करने के लिए “मेरी एग्ज़िट सलाह पाएँ” दबाएँ।')
+      : L('This is a quick summary. Press “Get my exit advice” and AI will explain it in plain words.', 'यह एक त्वरित सार है। “मेरी एग्ज़िट सलाह पाएँ” दबाएँ और AI इसे आसान शब्दों में समझाएगा।');
+    drawChart();
+  }
+
+  /* ---- cost chart ---- */
+  function drawChart() {
+    if ($('chartPanel').classList.contains('locked')) { drawLock(); var bx = $('chartBox'); bx.setAttribute('tabindex', '-1'); bx.setAttribute('aria-hidden', 'true'); return; }
+    var ghost = $('chartPanel').classList.contains('sample');   /* set by render() */
+    var keepInv = S.inv, keepCur = S.cur;
+    if (ghost) { S.inv = '100000'; S.cur = '120000'; }   /* sample amounts, only to draw the shape */
+    try { drawChartInner(ghost); } finally { S.inv = keepInv; S.cur = keepCur; }
+  }
+  /* ELSS lock-in: how far through the 3 years you are */
+  function drawLock() {
+    var box = $('chartBox'), W = Math.max(200, Math.floor(box.clientWidth)), H = Math.max(262, Math.floor(box.clientHeight));
+    var pl = 14, pr = 14, pw = W - pl - pr, frac = Math.min(1, S.days / 1095), bt = Math.max(100, Math.round(H * 0.34)), bh = 40, bb = bt + bh, mx = +(pl + frac * pw).toFixed(1), s = '';
+    var ptxt = L('Day ' + S.days, 'दिन ' + S.days), pw2 = ptxt.length * 7.2 + 24, px = Math.min(W - pr - pw2 / 2, Math.max(pl + pw2 / 2, mx));
+    s += '<defs><linearGradient id="gL" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FFB3A5" stop-opacity=".45"/><stop offset="1" stop-color="#FFB3A5" stop-opacity=".95"/></linearGradient></defs>';
+    s += '<rect x="' + pl + '" y="' + bt + '" width="' + pw + '" height="' + bh + '" rx="20" fill="rgba(255,255,255,.1)"/>';
+    if (mx - pl > 1) s += '<rect x="' + pl + '" y="' + bt + '" width="' + (mx - pl).toFixed(1) + '" height="' + bh + '" rx="20" fill="url(#gL)"/>';
+    [1, 2].forEach(function (i) { var x = (pl + i / 3 * pw).toFixed(1); s += '<line x1="' + x + '" y1="' + bt + '" x2="' + x + '" y2="' + bb + '" stroke="rgba(255,255,255,.35)" stroke-dasharray="3 4"/>'; });
+    s += '<circle cx="' + (W - pr - 20) + '" cy="' + (bt + bh / 2) + '" r="7" fill="#8CF2C0"/>';
+    s += '<line x1="' + mx + '" y1="30" x2="' + mx + '" y2="' + (bb + 8) + '" stroke="#fff" stroke-width="2"/>';
+    s += '<circle cx="' + mx + '" cy="' + (bt + bh / 2) + '" r="6.5" fill="#fff" stroke="#FF2D8A" stroke-width="3"/>';
+    s += '<rect x="' + (px - pw2 / 2).toFixed(1) + '" y="4" width="' + pw2.toFixed(1) + '" height="26" rx="13" fill="#FF2D8A"/><text x="' + px.toFixed(1) + '" y="21.5" text-anchor="middle" font-size="12" font-weight="700" fill="#fff" font-family="' + FF + '">' + ptxt + '</text>';
+    [[0, L('Day 0', 'दिन 0')], [1, L('1 yr', '1 वर्ष')], [2, L('2 yr', '2 वर्ष')], [3, L('3 yr', '3 वर्ष')]].forEach(function (t) {
+      var x = pl + t[0] / 3 * pw, anc = t[0] === 0 ? 'start' : t[0] === 3 ? 'end' : 'middle', last = t[0] === 3;
+      if (t[0] > 0 && t[0] < 3) s += '<line x1="' + x.toFixed(1) + '" y1="' + bb + '" x2="' + x.toFixed(1) + '" y2="' + (bb + 5) + '" stroke="rgba(255,255,255,.5)"/>';
+      s += '<text x="' + x.toFixed(1) + '" y="' + (bb + 24) + '" text-anchor="' + anc + '" font-size="11" font-weight="' + (last ? 800 : 500) + '" fill="' + (last ? '#fff' : '#CDB6EE') + '" font-family="' + FF + '">' + t[1] + '</text>';
+    });
+    s += '<text x="' + (W - pr) + '" y="' + (bb + 72) + '" text-anchor="end" font-size="15" font-weight="800" fill="#8CF2C0" font-family="' + FF + '">' + L('Free to sell from ' + fmtDate(lockCtx.date), 'बेचने की छूट ' + fmtDate(lockCtx.date) + ' से') + '</text>';
+    box.innerHTML = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + L('ELSS lock-in progress: day ' + S.days + ' of 1,095. ' + plural(lockCtx.rem, 'day') + ' to go.', 'ELSS लॉक-इन की प्रगति: दिन ' + S.days + ' / 1,095। ' + lockCtx.rem + ' दिन बाकी।') + '">' + s + '</svg>';
+  }
+  function drawChartInner(ghost) {
+    var box = $('chartBox'), W = Math.max(200, Math.floor(box.clientWidth)), H = Math.max(262, Math.floor(box.clientHeight));
+    var T = thr(), xmax = T + 150, pl = 10, pr = 10, pt = 78, pb = 36, pw = W - pl - pr, ph = H - pt - pb, base = pt + ph;
+    var eqc = isEq();
+    function cost(d) { var q = calc(inputs(d)); return (d <= T || !eqc) ? q.total_cost_now : q.current_tax; }
+    var step = Math.max(1, Math.round(xmax / 150)), pts = [], d;
+    for (d = 0; d < T; d += step) pts.push([d, cost(d)]);
+    pts.push([T, cost(T - 1)]);
+    var nS = pts.length;
+    pts.push([T, cost(T + 1)]);
+    for (d = T + step; d < xmax; d += step) pts.push([d, cost(d)]);
+    pts.push([xmax, cost(xmax)]);
+    var ymax = 0; pts.forEach(function (p) { if (p[1] > ymax) ymax = p[1]; }); if (ymax <= 0) ymax = 1;
+    function X(v) { return +(pl + v / xmax * pw).toFixed(1); }
+    function Y(v) { return +(pt + ph - (v / ymax) * ph).toFixed(1); }
+    var coralV = cost(Math.min(S.days, T - 1)), mintV = cost(T + 1);
+    var dotV = S.days <= T ? cost(Math.min(S.days, T - 1)) : cost(S.days);
+    var left = pts.slice(0, nS), right = pts.slice(nS);
+    function area(arr, x0, x1) { var s = 'M ' + X(x0) + ' ' + base; arr.forEach(function (p) { s += ' L ' + X(p[0]) + ' ' + Y(p[1]); }); return s + ' L ' + X(x1) + ' ' + base + ' Z'; }
+    var line = ''; pts.forEach(function (p, i) { line += (i ? ' L ' : 'M ') + X(p[0]) + ' ' + Y(p[1]); });
+    var gx = X(T), mx = X(Math.min(S.days, xmax)), fs = W < 520 ? 18 : 22, s = '';
+    s += '<defs><linearGradient id="gC" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFB3A5" stop-opacity=".95"/><stop offset="1" stop-color="#FFB3A5" stop-opacity=".28"/></linearGradient>' +
+      '<linearGradient id="gM" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8CF2C0" stop-opacity=".95"/><stop offset="1" stop-color="#8CF2C0" stop-opacity=".3"/></linearGradient></defs>';
+    s += '<path d="' + area(left, 0, T) + '" fill="url(#gC)"/>';
+    var mh = base - Y(mintV);
+    s += mh < 4 ? '<rect x="' + gx + '" y="' + (base - 4) + '" width="' + (X(xmax) - gx) + '" height="4" fill="#8CF2C0"/>' : '<path d="' + area(right, T, xmax) + '" fill="url(#gM)"/>';
+    s += '<line x1="' + pl + '" y1="' + base + '" x2="' + (W - pr) + '" y2="' + base + '" stroke="rgba(255,255,255,.35)"/>';
+    s += '<line x1="' + gx + '" y1="' + (pt - 14) + '" x2="' + gx + '" y2="' + base + '" stroke="#fff" stroke-opacity=".7" stroke-dasharray="4 4"/>';
+    s += '<path d="' + line + '" fill="none" stroke="#fff" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>';
+    if (!ghost) {
+      s += '<line x1="' + mx + '" y1="30" x2="' + mx + '" y2="' + base + '" stroke="#fff" stroke-width="2"/>';
+      s += '<circle cx="' + mx + '" cy="' + Y(dotV) + '" r="6.5" fill="#fff" stroke="#FF2D8A" stroke-width="3"/>';
+    }
+    function label(x, v, sub, col, anchor) {
+      var y = Y(v) - 10, w = Math.max(String(inr(v)).length * fs * 0.62, String(sub).length * 6.2);
+      if (anchor === 'start' && x + w > W - pr) { anchor = 'end'; x = W - pr; }
+      var st = ' paint-order="stroke" stroke="#2A0A52" stroke-width="4" stroke-linejoin="round" text-anchor="' + anchor + '"';
+      return '<text x="' + x + '" y="' + (y - fs - 6 + (fs === 18 ? 2 : 0)) + '" font-size="11" font-weight="600" fill="#E6D3FA"' + st + ' font-family="' + FF + '">' + sub + '</text>' +
+        '<text x="' + x + '" y="' + y + '" font-size="' + fs + '" font-weight="800" fill="' + col + '"' + st + ' font-family="' + FF + '" style="font-variant-numeric:tabular-nums">' + inr(v) + '</text>';
+    }
+    /* keep the two labels clear of the white day marker */
+    function span(v, sub) { return Math.max(String(inr(v)).length * fs * 0.62, String(sub).length * 6.2) + 8; }
+    var cSub = eqc ? L('Sell before the gate', 'सीमा से पहले बेचें') : L('Bought after Apr 2023', 'अप्रैल 2023 के बाद ख़रीदा'), cw = span(coralV, cSub), cx = pl + 2, ca = 'start';
+    if (mx > cx - 6 && mx < cx + cw) { var rx = gx - 8; if (!(mx > rx - cw && mx < rx + 6)) { cx = rx; ca = 'end'; } }
+    var mSub = eqc ? L('Sell after', 'सीमा के बाद बेचें') : L('Bought before Apr 2023', 'अप्रैल 2023 से पहले ख़रीदा'), mw = span(mintV, mSub), mX = gx + 8, ma = 'start';
+    if (mx > mX - 6 && mx < mX + mw) { if (!(mx > W - pr - mw && mx < W - pr + 6)) { mX = W - pr; ma = 'end'; } }
+    if (!ghost) s += label(cx, coralV, cSub, '#FFB3A5', ca);
+    if (!ghost) s += label(mX, mintV, mSub, '#8CF2C0', ma);
+    var ptxt = L('Day ' + S.days, 'दिन ' + S.days), pw2 = ptxt.length * 7.2 + 24, px = Math.min(W - pr - pw2 / 2, Math.max(pl + pw2 / 2, mx));
+    if (!ghost) s += '<rect x="' + (px - pw2 / 2).toFixed(1) + '" y="4" width="' + pw2.toFixed(1) + '" height="26" rx="13" fill="#FF2D8A"/><text x="' + px.toFixed(1) + '" y="21.5" text-anchor="middle" font-size="12" font-weight="700" fill="#fff" font-family="' + FF + '">' + ptxt + '</text>';
+    var ticks = [], k;
+    if (!eqc) { ticks.push([365, L('1 yr', '1 वर्ष')], [730, L('2 yr', '2 वर्ष')], [T, L('1 Apr 2023', '1 अप्रैल 2023')]); }
+    else { [['3m', '3 माह'], ['6m', '6 माह'], ['9m', '9 माह'], ['1 yr', '1 वर्ष']].forEach(function (t, j) { ticks.push([T / 4 * (j + 1), L(t[0], t[1])]); }); }
+    s += '<text x="' + pl + '" y="' + (base + 22) + '" font-size="11" fill="#CDB6EE" font-family="' + FF + '">' + (W < 520 ? '0' : L('Day 0', 'दिन 0')) + '</text>';
+    ticks.forEach(function (t, j) {
+      var last = j === ticks.length - 1, x = X(t[0]);
+      s += '<line x1="' + x + '" y1="' + base + '" x2="' + x + '" y2="' + (base + 5) + '" stroke="rgba(255,255,255,.5)"/>' +
+        '<text x="' + x + '" y="' + (base + 22) + '" text-anchor="middle" font-size="11" font-weight="' + (last ? 800 : 500) + '" fill="' + (last ? '#fff' : '#CDB6EE') + '" font-family="' + FF + '">' + t[1] + (last && eqc ? L(' gate', ' सीमा') : '') + '</text>';
+    });
+    box.innerHTML = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' +
+      (eqc ? L('Cost of selling by day. Before day ' + T + ' it is ' + inr(coralV) + '. After it is ' + inr(mintV) + '.', 'दिन के हिसाब से बेचने की लागत। दिन ' + T + ' से पहले ' + inr(coralV) + '। उसके बाद ' + inr(mintV) + '।') : L('Cost of selling by days held. Bought on or after 1 April 2023: ' + inr(coralV) + '. Bought before: ' + inr(mintV) + '.', 'रखे गए दिनों के हिसाब से बेचने की लागत। 1 अप्रैल 2023 या उसके बाद ख़रीदा: ' + inr(coralV) + '। उससे पहले: ' + inr(mintV) + '।')) + '">' + s + '</svg>';
+    box.setAttribute('aria-valuemax', xmax); box.setAttribute('aria-valuenow', S.days);
+    box.setAttribute('tabindex', ghost ? '-1' : '0'); if (ghost) box.setAttribute('aria-hidden', 'true'); else box.removeAttribute('aria-hidden');
+  }
+
+  /* ---- events ---- */
+  function touch() { S.scn = null; S.checked = false; }
+  function setDays(v) { var d = parseInt(v, 10); S.days = isNaN(d) ? 0 : Math.max(0, d); }
+  function setType(t) { S.type = t; S.cat = t === 'Equity Fund' ? EQ[0] : DB[2]; touch(); render(); }
+  function setLang(next) {
+    hi = next === 'hi';
+    document.documentElement.lang = hi ? 'hi' : 'en';
+    $('langEn').setAttribute('aria-pressed', !hi); $('langHi').setAttribute('aria-pressed', hi);
+    applyStatic(); buildLang(); render();
+  }
+  function init() {
+    collect(); buildStatic(); buildLang();
+    window.addEventListener('resize', refit);
+    $('langEn').onclick = function () { setLang('en'); };
+    $('langHi').onclick = function () { setLang('hi'); };
+    $('typeEq').onclick = function () { setType('Equity Fund'); };
+    $('typeDb').onclick = function () { setType('Debt Fund'); };
+    $('cat').onchange = function () { S.cat = this.value; touch(); render(); };
+    $('inv').oninput = function () { S.inv = this.value; touch(); render(); };
+    $('cur').oninput = function () { S.cur = this.value; touch(); render(); };
+    $('amts').onclick = function (e) { var b = e.target.closest('button'); if (!b) return; S.inv = String(b.dataset.a); touch(); render(); };
+    $('sl').oninput = function () { setDays(this.value); touch(); render(); };
+    $('daysIn').oninput = function () { setDays(this.value); touch(); render(); };
+    $('dateIn').onchange = function () {
+      if (!this.value) return;
+      var diff = Math.max(0, Math.floor((new Date().getTime() - new Date(this.value).getTime()) / 86400000));
+      S.days = diff; touch(); render();
+    };
+    $('presets').onclick = function (e) { var b = e.target.closest('button'); if (!b) return; setDays(b.dataset.d); touch(); render(); };
+    $('advBtn').onclick = function () { S.adv = !S.adv; render(); };
+    $('loadIn').oninput = function () { S.load = this.value; touch(); render(); };
+    $('slab').onchange = function () { S.slab = this.value; touch(); render(); };
+    $('rateIn').oninput = function () { S.rate = this.value; touch(); render(); };
+    $('scns').onclick = function (e) {
+      var b = e.target.closest('button'); if (!b) return; var c = SCN[b.dataset.k];
+      S.type = c.type; S.cat = c.cat; S.inv = c.inv; S.cur = c.cur; S.days = c.days; S.load = c.load; if (c.slab) S.slab = c.slab; S.scn = b.dataset.k; S.checked = false; render();
+    };
+    $('form').onsubmit = function (e) {
+      e.preventDefault();
+      S.checked = true;
+      var v = $('verdict'); v.classList.remove('flash'); void v.offsetWidth; v.classList.add('flash');
+      aiState = lastNow; aiAsk = true;
+      render();
+      var card = $('ai');
+      card.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+      try { card.focus({ preventScroll: true }); } catch (_) {}
+    };
+
+    var box = $('chartBox');
+    function dayAt(e) { var rc = box.getBoundingClientRect(), d = Math.round((e.clientX - rc.left - 10) / (rc.width - 20) * (thr() + 150)); return Math.max(0, Math.min(thr() + 150, d)); }
+    box.addEventListener('pointerdown', function (e) { drag = true; try { box.setPointerCapture(e.pointerId); } catch (_) {} S.days = dayAt(e); touch(); render(); });
+    box.addEventListener('pointermove', function (e) { if (!drag) return; S.days = dayAt(e); touch(); render(); });
+    function end() { if (drag) { drag = false; render(); } }
+    box.addEventListener('pointerup', end); box.addEventListener('pointercancel', end);
+    box.addEventListener('keydown', function (e) {
+      var st = e.shiftKey ? 10 : 1;
+      if (e.key === 'ArrowLeft') { S.days = Math.max(0, S.days - st); } else if (e.key === 'ArrowRight') { S.days = Math.min(thr() + 150, S.days + st); } else return;
+      e.preventDefault(); touch(); render();
+    });
+    if (window.ResizeObserver) new ResizeObserver(function () { drawChart(); }).observe(box); else window.addEventListener('resize', drawChart);
+    render();
+  }
+  init();
+})();
+</script>

@@ -1,4 +1,4 @@
-// Run with: node --test src/lib/whatif/exit-cases.test.mjs
+// Run with: node --test src/lib/exit/exit-cases.test.mjs
 // Checks frontend Smart Exit rules against reference/exit_cases.json
 import test from 'node:test';
 import assert from 'node:assert/strict';
