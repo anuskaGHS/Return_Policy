@@ -28,6 +28,9 @@ export default function FundForm({ x }) {
 
   const ldSet = s.load !== '' && !Number.isNaN(parseFloat(s.load));
   const using = L('Using the load you entered.', 'आपके डाले हुए लोड का इस्तेमाल हो रहा है।');
+  // SEBI (Mutual Funds) Regulations, 2026, reg. 44(4): exit load of an open-ended scheme is at most 3% of NAV.
+  // Only a note: the numbers still work, because a typo or an unusual scheme must not block the page.
+  const loadOver = ldSet && parseFloat(s.load) > 3;
   const loadHint = v.eq
     ? (ldSet ? using : L('Leave empty and we assume 1% on a sale within a year.', 'खाली छोड़ें तो हम 1 वर्ष के भीतर बेचने पर 1% मान लेंगे।'))
     : (ldSet ? using : L('Leave empty and we assume no exit load.', 'खाली छोड़ें तो हम मान लेंगे कि कोई एग्ज़िट लोड नहीं है।'));
@@ -91,10 +94,15 @@ export default function FundForm({ x }) {
           <div>
             <label className="ex-lbl" htmlFor="ex-load">{t('Exit load (%)')}</label>
             <div className="ex-bigin" style={{ padding: '8px 14px' }}>
-              <input id="ex-load" type="number" step="any" min="0" max="10" placeholder="1.0" inputMode="decimal" style={{ fontSize: '1.1rem' }} value={s.load} onChange={(e) => x.edit({ load: e.target.value })} />
+              <input id="ex-load" type="number" step="any" min="0" max="100" placeholder="1.0" inputMode="decimal" style={{ fontSize: '1.1rem' }} value={s.load} onChange={(e) => x.edit({ load: e.target.value })} />
               <span style={{ fontSize: '1rem' }}>%</span>
             </div>
             <p className="ex-hint">{loadHint}</p>
+            {loadOver && (
+              <p className="ex-hint ex-warn" id="ex-load-note" role="status">
+                {L('SEBI limits exit load to 3%. Please check this figure in your fund’s SID, KIM or factsheet.', 'SEBI ने एग्ज़िट लोड की सीमा 3% रखी है। कृपया यह आँकड़ा अपने फ़ंड के SID, KIM या फ़ैक्टशीट में जाँच लें।')}
+              </p>
+            )}
           </div>
           <div>
             <label className="ex-lbl" htmlFor="ex-rate">{t('Money elsewhere would earn (% a year)')}</label>
