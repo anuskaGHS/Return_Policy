@@ -38,7 +38,14 @@ export default function useExitAdvisor() {
 
   // any change by the user clears the "picked example" highlight and the "checked just now" note
   const edit = useCallback((patch) => setS((p) => ({ ...p, ...patch, scn: null, checked: false })), []);
-  const setType = useCallback((t) => edit({ type: t, cat: t === 'Equity Fund' ? EQ[0] : DB[2] }), [edit]);
+  const setType = useCallback((t) => setS((p) => (p.type === t ? p : {
+    ...p,
+    type: t,
+    cat: t === 'Equity Fund' ? EQ[0] : DB[2],
+    load: '',
+    scn: null,
+    checked: false,
+  })), []);
   const setDays = useCallback((raw) => {
     const d = parseInt(raw, 10);
     edit({ days: Number.isNaN(d) ? 0 : Math.max(0, d) });

@@ -43,7 +43,11 @@ function LockChart({ x, W, H }) {
   const pl = 14;
   const pr = 14;
   const pw = W - pl - pr;
-  const frac = Math.min(1, s.days / 1095);
+  const daysNum = Math.max(0, Number(s.days) || 0);
+  const remNum = Math.max(0, Number(v?.rem) || 0);
+  const total = daysNum + remNum || 1095;
+  const totalFmt = total.toLocaleString('en-US');
+  const frac = Math.min(1, daysNum / total);
   const bt = Math.max(100, Math.round(H * 0.34));
   const bh = 40;
   const bb = bt + bh;
@@ -52,7 +56,7 @@ function LockChart({ x, W, H }) {
   const ticks = [[0, L('Day 0', 'दिन 0')], [1, L('1 yr', '1 वर्ष')], [2, L('2 yr', '2 वर्ष')], [3, L('3 yr', '3 वर्ष')]];
   return (
     <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} role="img"
-      aria-label={L(`ELSS lock-in progress: day ${s.days} of 1,095. ${v.rem} ${v.rem === 1 ? 'day' : 'days'} to go.`, `ELSS लॉक-इन की प्रगति: दिन ${s.days} / 1,095। ${v.rem} दिन बाकी।`)}>
+      aria-label={L(`ELSS lock-in progress: day ${s.days} of ${totalFmt}. ${v.rem} ${v.rem === 1 ? 'day' : 'days'} to go.`, `ELSS लॉक-इन की प्रगति: दिन ${s.days} / ${totalFmt}। ${v.rem} दिन बाकी।`)}>
       <defs>
         <linearGradient id="ex-grad-lock" x1="0" y1="0" x2="1" y2="0">
           <stop offset="0" stopColor="#FFB3A5" stopOpacity=".45" />
