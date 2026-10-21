@@ -72,6 +72,7 @@
 .ex-bigin span{font-weight:800;font-size:1.2rem;color:var(--v2)}
 .ex-bigin input{width:100%;min-width:0;border:0;background:transparent;outline:0;font:800 1.45rem/1.1 var(--font);letter-spacing:-.02em;color:var(--lav-ink);-moz-appearance:textfield;font-variant-numeric:tabular-nums}
 .ex-bigin input::-webkit-inner-spin-button,.ex-bigin input::-webkit-outer-spin-button,.ex-mini input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.ex-bigin input:disabled{opacity:.6;cursor:not-allowed}
 .ex-gain{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:6px 12px;border-radius:99px;font-size:.82rem;font-weight:700;font-variant-numeric:tabular-nums}
 .ex-gain.ex-pos{background:rgba(15,107,71,.13);color:var(--gain-d)}
 .ex-gain.ex-none{background:rgba(75,15,134,.1);color:var(--lav-ink3)}

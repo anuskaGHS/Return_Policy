@@ -267,16 +267,23 @@ export function ruleTiles(v, loadText, lang) {
       ? L(` ${inr(free)} of your gain is tax-free.`, ` आपके मुनाफ़े के ${inr(free)} टैक्स-मुक्त हैं।`)
       : '';
     const custom = loadText !== null; // the user typed an exit load
-    return [
-      { cls: 'r1', kick: L('Held 1 year or less', '1 वर्ष या उससे कम रखा'), tag: short ? yes : null, big: '20%', p: L('Tax on your gain. Called STCG.', 'आपके मुनाफ़े पर टैक्स। इसे STCG कहते हैं।'), foot: L('Rate since 23 July 2024', '23 जुलाई 2024 से लागू दर') },
-      { cls: 'r2', kick: L('Held over 1 year', '1 वर्ष से ज़्यादा रखा'), tag: !short ? yes : null, big: '12.5%', p: L('On gains above ₹1.25L a year. Called LTCG.', 'साल में ₹1.25L से ऊपर के मुनाफ़े पर। इसे LTCG कहते हैं।') + ex, foot: L('Rate since 23 July 2024', '23 जुलाई 2024 से लागू दर') },
-      {
+    const tile3 = v.elss
+      ? {
+        cls: 'r3', kick: L('Exit load', 'एग्ज़िट लोड'), tag: { text: L('No load', 'कोई लोड नहीं') }, big: '0%',
+        p: L('The ELSS schemes we checked list no exit load, so we use 0%. Confirm in your fund’s SID.', 'हमने जो ELSS फ़ंड देखे, उनमें कोई एग्ज़िट लोड नहीं है, इसलिए हम 0% मानते हैं। अपने फ़ंड के SID में जाँच लें।'),
+        foot: L('Check it in the SID, KIM or factsheet', 'SID, KIM या फ़ैक्टशीट में जाँचें'),
+      }
+      : {
         cls: 'r3', kick: L('Exit load', 'एग्ज़िट लोड'), tag: custom ? null : { text: L('Assumed', 'अनुमान'), warn: true }, big: custom ? `${loadText}%` : '1%',
         p: custom
           ? L('The load you entered. It is used in the numbers above.', 'यह आपका डाला हुआ लोड है। ऊपर के आँकड़ों में यही इस्तेमाल हुआ है।')
           : L('We assume 1% on a sale within a year, only as an example. Each fund sets its own, so enter yours under “Custom exit load and interest rate”.', 'हम 1 वर्ष के भीतर बेचने पर 1% मान लेते हैं, सिर्फ़ उदाहरण के लिए। हर फ़ंड का अपना लोड होता है, इसलिए अपना लोड “अपना एग्ज़िट लोड और ब्याज दर” में डालें।'),
         foot: custom ? L('Check it in the SID, KIM or factsheet', 'SID, KIM या फ़ैक्टशीट में जाँचें') : L('Find yours in the SID, KIM or factsheet', 'अपना लोड SID, KIM या फ़ैक्टशीट में देखें'),
-      },
+      };
+    return [
+      { cls: 'r1', kick: L('Held 1 year or less', '1 वर्ष या उससे कम रखा'), tag: short ? yes : null, big: '20%', p: L('Tax on your gain. Called STCG.', 'आपके मुनाफ़े पर टैक्स। इसे STCG कहते हैं।'), foot: L('Rate since 23 July 2024', '23 जुलाई 2024 से लागू दर') },
+      { cls: 'r2', kick: L('Held over 1 year', '1 वर्ष से ज़्यादा रखा'), tag: !short ? yes : null, big: '12.5%', p: L('On gains above ₹1.25L a year. Called LTCG.', 'साल में ₹1.25L से ऊपर के मुनाफ़े पर। इसे LTCG कहते हैं।') + ex, foot: L('Rate since 23 July 2024', '23 जुलाई 2024 से लागू दर') },
+      tile3,
     ];
   }
   const slabTxt = `${v.inp.applicable_slab_rate_pct}%`;
