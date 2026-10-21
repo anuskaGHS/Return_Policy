@@ -245,7 +245,9 @@ def calculate_exit_analysis(
     is_elss = is_equity and ("ELSS" in fund_category)
 
     debt_cutoff_days = days_since_debt_rule_start(now)
-    base = tax_at_day(data, holding_period_days, debt_cutoff_days)
+    # ELSS schemes list Nil exit load in their SIDs; exit load is always 0% (never assumed, never typed).
+    pricing_data = {**data, "exit_load_pct": 0} if is_elss else data
+    base = tax_at_day(pricing_data, holding_period_days, debt_cutoff_days)
 
     # Opportunity cost: the money you would get today, earning simple interest elsewhere while you wait.
     raw_rate = data.get("interest_rate_pct")
@@ -265,7 +267,7 @@ def calculate_exit_analysis(
     locked = bool(lock and lock["locked"])
     lock_in_obj: Optional[LockIn] = None
     if is_elss:
-        after = tax_at_day(data, ELSS_LOCK_APPROX_DAYS, debt_cutoff_days)
+        after = tax_at_day(pricing_data, ELSS_LOCK_APPROX_DAYS, debt_cutoff_days)
         lock_in_obj = LockIn(
             locked=locked,
             days_left=lock["days_left"],

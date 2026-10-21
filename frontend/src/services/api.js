@@ -225,7 +225,9 @@ export function calculateLocalExitAnalysis(inputs = {}, now = new Date()) {
   const is_elss = is_equity && fund_category.includes("ELSS");
 
   const withCutoff = { ...inputs, _debtCutoffDays: daysSinceDebtRuleStart(now) };
-  const base = taxAtDay(withCutoff, holding_period_days);
+  // ELSS schemes list Nil exit load in their SIDs; exit load is always 0% (never assumed, never typed).
+  const pricingInput = is_elss ? { ...withCutoff, exit_load_pct: 0 } : withCutoff;
+  const base = taxAtDay(pricingInput, holding_period_days);
 
   // Opportunity cost: the money you would get today, earning simple interest elsewhere while you wait.
   const rawRate = inputs.interest_rate_pct;
@@ -244,7 +246,7 @@ export function calculateLocalExitAnalysis(inputs = {}, now = new Date()) {
   const locked = !!(lock && lock.locked);
   let lock_in = null;
   if (is_elss) {
-    const after = taxAtDay(withCutoff, ELSS_LOCK_APPROX_DAYS);
+    const after = taxAtDay(pricingInput, ELSS_LOCK_APPROX_DAYS);
     lock_in = {
       locked,
       days_left: lock.days_left,
