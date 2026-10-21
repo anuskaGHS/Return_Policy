@@ -1,5 +1,5 @@
 from typing import List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 class SimulationRequest(BaseModel):
     monthly_sip: float = Field(
@@ -97,19 +97,25 @@ class SimulationResponse(BaseModel):
     health_score: Optional[HealthScoreResult] = None
 
 
+class LockIn(BaseModel):
+    locked: bool = Field(..., description="Whether units are currently locked in")
+    days_left: int = Field(..., description="Days remaining until units unlock")
+    unlock_date: str = Field(..., description="Date when units unlock in ISO format (YYYY-MM-DD)")
+    cost_when_unlocked: float = Field(..., description="Total exit frictions once unlocked")
+    net_when_unlocked: float = Field(..., description="Net in-hand proceeds once unlocked")
+
+
 class ExitAnalysisRequest(BaseModel):
     investment_type: str = Field(
         default="Equity Fund",
         description="Type of investment: 'Equity Fund' or 'Debt Fund'"
     )
-    amount_invested: float = Field(
-        ...,
-        gt=0.0,
+    amount_invested: Optional[float] = Field(
+        default=None,
         description="Original invested principal amount in INR"
     )
-    current_value: float = Field(
-        ...,
-        ge=0.0,
+    current_value: Optional[float] = Field(
+        default=None,
         description="Current market value of the investment in INR"
     )
     holding_period_days: int = Field(
@@ -118,7 +124,7 @@ class ExitAnalysisRequest(BaseModel):
         description="Holding period of the investment in days"
     )
     fund_category: Optional[str] = Field(
-        default="Equity: General",
+        default=None,
         description="Specific fund category (e.g. Large Cap, Flexi Cap, Liquid Fund)"
     )
     exit_load_pct: Optional[float] = Field(
@@ -133,9 +139,28 @@ class ExitAnalysisRequest(BaseModel):
         le=45.0,
         description="Investor's marginal income tax slab rate % for debt fund gains (default: 30%)"
     )
+    interest_rate_pct: Optional[float] = Field(
+        default=None,
+        description="Alternative risk-free interest rate percentage per annum"
+    )
+
+    @field_validator(
+        "amount_invested",
+        "current_value",
+        "exit_load_pct",
+        "applicable_slab_rate_pct",
+        "interest_rate_pct",
+        mode="before"
+    )
+    @classmethod
+    def empty_str_to_none(cls, v):
+        if isinstance(v, str) and v.strip() == "":
+            return None
+        return v
 
 
 class ExitAnalysisResponse(BaseModel):
+    valid: bool = Field(default=True, description="Input validity indicator")
     investment_type: str = Field(..., description="Normalized investment type (Equity Fund or Debt Fund)")
     fund_category: str = Field(..., description="Fund category evaluated")
     amount_invested: float = Field(..., description="Original investment amount in INR")
@@ -148,21 +173,34 @@ class ExitAnalysisResponse(BaseModel):
     holding_status: str = Field(..., description="'Short-Term' or 'Long-Term'")
     tax_rate_applied_pct: float = Field(..., description="Statutory or slab tax rate % applied")
     current_tax: float = Field(..., description="Calculated tax liability if exiting today in INR")
-    ltcg_exemption_applied: float = Field(..., description="Rupee amount of Section 112A exemption utilized (up to ₹1,25,000)")
+    ltcg_exemption_applied: float = Field(..., description="Rupee amount of LTCG exemption utilized (up to ₹1,25,000)")
     exit_load_pct: float = Field(..., description="Applicable exit load %")
     exit_load_amount: float = Field(..., description="Exit load penalty in INR if exiting today")
+    exit_load_is_assumed: bool = Field(..., description="Whether exit load was assumed rather than provided by user")
     total_cost_now: float = Field(..., description="Total exit frictions today = tax + exit load (INR)")
     net_inhand_now: float = Field(..., description="Net proceeds received if exiting today after tax & exit load")
-    days_to_ltcg_window: Optional[int] = Field(default=None, description="Days remaining until LTCG qualification (None if already long-term)")
+    bought_before_apr_2023: bool = Field(..., description="Whether debt fund was acquired before 1 April 2023")
+    days_to_ltcg_window: Optional[int] = Field(default=None, description="Days remaining until LTCG qualification (None if not applicable)")
     projected_tax_if_wait: float = Field(..., description="Projected tax if waiting until LTCG window (assuming flat valuation)")
-    projected_exit_load_if_wait: float = Field(..., description="Projected exit load if waiting until LTCG window (typically 0%)")
-    total_cost_if_wait: float = Field(..., description="Total exit frictions after waiting = projected LTCG tax (INR)")
+    projected_exit_load_if_wait: float = Field(..., description="Projected exit load if waiting until LTCG window")
+    total_cost_if_wait: float = Field(..., description="Total exit frictions after waiting = projected LTCG tax + exit load (INR)")
     net_inhand_if_wait: float = Field(..., description="Net proceeds received after waiting until LTCG window")
     potential_savings: float = Field(..., description="Net rupee savings gained by holding until LTCG window")
-    recommendation: str = Field(..., description="Actionable directive: 'Exit Now' or 'Hold'")
-    recommendation_summary: str = Field(..., description="Plain-language directive including days to wait and rupee savings")
-    assumption_notes: List[str] = Field(default_factory=list, description="Explicit assumptions, statutory references, and flat-value caveats")
-    rule_flags: List[str] = Field(default_factory=list, description="Statutory verification flags (e.g. Finance Act 2023 Sec 50AA debt fund rules)")
+    tax_only_recommendation: str = Field(..., description="Tax-only recommendation before accounting for opportunity cost: 'Exit Now' or 'Hold'")
+    interest_rate_pct: float = Field(..., description="Alternative interest rate % used for opportunity cost calculation")
+    wait_days: Optional[int] = Field(default=None, description="Days to wait under consideration")
+    interest_elsewhere: float = Field(..., description="Opportunity cost: estimated interest earned elsewhere while waiting")
+    have_after_sell_today: Optional[float] = Field(default=None, description="Net in-hand today plus interest earned elsewhere")
+    have_after_waiting: Optional[float] = Field(default=None, description="Net in-hand after waiting until LTCG window")
+    net_advantage_of_waiting: Optional[float] = Field(default=None, description="Net financial advantage of waiting versus selling today")
+    fall_limit_amount: Optional[float] = Field(default=None, description="Maximum rupee market decline before waiting becomes unprofitable")
+    fall_limit_pct: Optional[float] = Field(default=None, description="Maximum percentage market decline before waiting becomes unprofitable")
+    recommendation: str = Field(..., description="Actionable directive: 'Exit Now', 'Hold', or 'Locked'")
+    better_pick: Optional[str] = Field(default=None, description="Better pick: 'wait', 'sell', or None if locked")
+    lock_in: Optional[LockIn] = Field(default=None, description="ELSS lock-in details if applicable")
+    recommendation_summary: str = Field(default="", description="Plain-language directive including days to wait and rupee savings")
+    assumption_notes: List[str] = Field(default_factory=list, description="Explicit assumptions and flat-value caveats")
+    rule_flags: List[str] = Field(default_factory=list, description="Statutory verification flags")
 
 
 class LoanOptimizerRequest(BaseModel):

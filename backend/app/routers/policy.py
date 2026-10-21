@@ -70,10 +70,20 @@ def simulate_policy(request: SimulationRequest):
 def get_exit_analysis(request: ExitAnalysisRequest):
     """
     Evaluates whether an investor should exit their mutual fund investment today or hold until the LTCG window.
-    Calculates deterministic STCG vs LTCG tax, exit load penalty, days to window, and quantifiable savings.
+    Calculates deterministic STCG vs LTCG tax, exit load, days to the LTCG window, interest the money could earn while waiting, and the ELSS 3-year lock.
     """
     try:
         return calculate_exit_analysis(req=request)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=422,
+            detail=str(e)
+        )
+    except OverflowError:
+        raise HTTPException(
+            status_code=422,
+            detail="That number is too large to calculate."
+        )
     except Exception as e:
         raise HTTPException(
             status_code=500,
