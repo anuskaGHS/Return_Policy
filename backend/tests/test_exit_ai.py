@@ -15,6 +15,8 @@ from app.services.exit_ai import (
     format_inr,
     build_facts,
     build_key_points,
+    build_key_points_hi,
+    format_date_words_hi,
     generate_exit_explanation,
     SYSTEM_PROMPT,
 )
@@ -62,8 +64,8 @@ def test_successful_mocked_reply_source_is_ai(exit_cases):
     res_a, _, _ = exit_cases
     facts_a = build_facts(res_a)
 
-    mock_en = f"You invested {facts_a['amounts']['invested']} which is now worth {facts_a['amounts']['worth_today']}. If you sell today you receive {facts_a['amounts']['you_receive_if_sold_today']}."
-    mock_hi = f"आपने {facts_a['amounts']['invested']} निवेश किया जो अब {facts_a['amounts']['worth_today']} है। यदि आप आज बेचते हैं तो आपको {facts_a['amounts']['you_receive_if_sold_today']} मिलेंगे।"
+    mock_en = " ".join(build_key_points(res_a, facts_a))
+    mock_hi = " ".join(build_key_points_hi(res_a, facts_a))
 
     with patch("app.services.exit_ai.settings.GROQ_API_KEY", "mock-groq-api-key"), \
          patch("app.services.exit_ai.Groq") as mock_groq_cls:
@@ -206,11 +208,13 @@ def test_reply_with_amounts_followed_by_comma(exit_cases):
     """10. Reply texts where each allowed amount is followed by a comma -> source 'ai'."""
     res_a, _, _ = exit_cases
     facts_a = build_facts(res_a)
-    x = facts_a["amounts"]["you_receive_if_sold_today"]
-    y = facts_a["amounts"]["you_receive_if_waiting"]
+    pts_en = build_key_points(res_a, facts_a)
+    rupee_pat = re.compile(r"₹\s*[\d,]+(?:\.\d+)?")
+    amts = [m.replace(" ", "").rstrip(",") for m in rupee_pat.findall(" ".join(pts_en))]
+    comma_list = ", ".join(f"{a}," for a in amts)
 
-    mock_en = f"You receive {x}, and waiting gives {y}, so wait."
-    mock_hi = f"आपको {x}, मिलते हैं, और प्रतीक्षा करने पर {y}, मिलते हैं।"
+    mock_en = f"You receive {comma_list} and waiting gives more."
+    mock_hi = f"आपको {comma_list} मिलते हैं और रुकने पर अधिक लाभ होता है।"
 
     with patch("app.services.exit_ai.settings.GROQ_API_KEY", "mock-groq-api-key"), \
          patch("app.services.exit_ai.Groq") as mock_groq_cls:
@@ -229,10 +233,14 @@ def test_reply_with_amount_followed_by_full_stop(exit_cases):
     """11. Amounts at the end of a sentence followed by a full stop -> source 'ai'."""
     res_a, _, _ = exit_cases
     facts_a = build_facts(res_a)
-    x = facts_a["amounts"]["you_receive_if_sold_today"]
+    pts_en = build_key_points(res_a, facts_a)
+    rupee_pat = re.compile(r"₹\s*[\d,]+(?:\.\d+)?")
+    amts = [m.replace(" ", "").rstrip(",") for m in rupee_pat.findall(" ".join(pts_en))]
+    sentences_en = " ".join(f"Amount is {a}." for a in amts)
+    sentences_hi = " ".join(f"रकम {a} है।" for a in amts)
 
-    mock_en = f"You receive {x}."
-    mock_hi = f"आपको {x} मिलते हैं।"
+    mock_en = sentences_en
+    mock_hi = sentences_hi
 
     with patch("app.services.exit_ai.settings.GROQ_API_KEY", "mock-groq-api-key"), \
          patch("app.services.exit_ai.Groq") as mock_groq_cls:
@@ -537,3 +545,159 @@ def test_every_valid_case_in_exit_cases_fixture():
                 assert cleaned in valid_amounts, (
                     f"Amount {cleaned} found in key point '{p}' is not in facts['amounts'] {valid_amounts} for case {case['name']}"
                 )
+
+
+def test_key_points_hi_branch_lengths_and_amounts():
+    """E.1 For each branch, assert len(build_key_points_hi) == len(build_key_points) and ₹ amounts set match."""
+    today = date(2026, 10, 21)
+    rupee_pat = re.compile(r"₹\s*[\d,]+(?:\.\d+)?")
+
+    cases = [
+        # 1. Locked
+        ("Locked", ExitAnalysisRequest(amount_invested=100000, current_value=120000, holding_period_days=200, investment_type="Equity Fund", fund_category="Equity: ELSS (Tax Saver - 3yr lock)")),
+        # 2. Hold with default interest and exit load assumed
+        ("Hold default", ExitAnalysisRequest(amount_invested=100000, current_value=120000, holding_period_days=200, investment_type="Equity Fund", fund_category="Equity: Flexi Cap / Large Cap")),
+        # 3. Hold with interest 0 and a typed exit load
+        ("Hold int 0, typed load", ExitAnalysisRequest(amount_invested=100000, current_value=120000, holding_period_days=200, interest_rate_pct=0, exit_load_pct=1.0, investment_type="Equity Fund", fund_category="Equity: Flexi Cap / Large Cap")),
+        # 4. Exit Now with tax_only_recommendation Hold
+        ("Exit Now tax Hold", ExitAnalysisRequest(amount_invested=100000, current_value=120000, holding_period_days=200, interest_rate_pct=20, investment_type="Equity Fund", fund_category="Equity: Flexi Cap / Large Cap")),
+        # 5. Plain Exit Now with cost
+        ("Exit Now with cost", ExitAnalysisRequest(amount_invested=100000, current_value=300000, holding_period_days=400, investment_type="Equity Fund", fund_category="Equity: Flexi Cap / Large Cap")),
+        # 6. Plain Exit Now with zero cost
+        ("Exit Now zero cost", ExitAnalysisRequest(amount_invested=200000, current_value=180000, holding_period_days=300, investment_type="Debt Fund", fund_category="Debt: Banking and PSU Fund")),
+    ]
+
+    for label, req in cases:
+        res = calculate_exit_analysis(req, today=today)
+        facts = build_facts(res)
+        pts_en = build_key_points(res, facts)
+        pts_hi = build_key_points_hi(res, facts)
+
+        assert len(pts_hi) == len(pts_en), f"Branch {label} length mismatch: hi={len(pts_hi)} vs en={len(pts_en)}"
+        amts_en = {m.replace(" ", "").rstrip(",") for m in rupee_pat.findall(" ".join(pts_en))}
+        amts_hi = {m.replace(" ", "").rstrip(",") for m in rupee_pat.findall(" ".join(pts_hi))}
+        assert amts_hi == amts_en, f"Branch {label} amounts mismatch: hi={amts_hi} vs en={amts_en}"
+
+
+def test_golden_strings_hindi_key_points():
+    """E.2 Golden strings: Hold case and Locked case."""
+    today = date(2026, 10, 21)
+
+    # Hold case (100000 invested, 120000 current, 200 days held -> 166 days wait)
+    req_hold = ExitAnalysisRequest(
+        amount_invested=100000,
+        current_value=120000,
+        holding_period_days=200,
+        investment_type="Equity Fund",
+        fund_category="Equity: Flexi Cap / Large Cap",
+    )
+    res_hold = calculate_exit_analysis(req_hold, today=today)
+    facts_hold = build_facts(res_hold)
+    pts_hold_hi = build_key_points_hi(res_hold, facts_hold)
+
+    expected_hold = [
+        "166 दिन और रुकना बेहतर है।",
+        "रुकने से कुल ₹5,200 बचते हैं: ₹4,000 कम टैक्स और ₹1,200 कम एग्ज़िट लोड।",
+        "आज बेचने पर मिलने वाले ₹1,14,800 दूसरी जगह इन दिनों में लगभग ₹3,263 ब्याज कमा सकते हैं।",
+        "उस ब्याज को गिनने पर भी रुकना ₹1,937 से आगे रहता है।",
+        "1% एग्ज़िट लोड हमारा अनुमान है; अपने फ़ंड के दस्तावेज़ों में असली एग्ज़िट लोड जाँचें।",
+        "6.25% ब्याज दर एक अनुमान है।",
+        "यह मानकर चला गया है कि फ़ंड का मूल्य स्थिर रहेगा; असली रिटर्न से ये आँकड़े बदल जाएँगे।",
+    ]
+    assert pts_hold_hi == expected_hold
+
+    # Locked case (100000 invested, 120000 current, 200 days held -> unlock date 2029-04-04, 896 days left)
+    req_locked = ExitAnalysisRequest(
+        amount_invested=100000,
+        current_value=120000,
+        holding_period_days=200,
+        investment_type="Equity Fund",
+        fund_category="Equity: ELSS (Tax Saver - 3yr lock)",
+    )
+    res_locked = calculate_exit_analysis(req_locked, today=today)
+    facts_locked = build_facts(res_locked)
+    pts_locked_hi = build_key_points_hi(res_locked, facts_locked)
+
+    assert pts_locked_hi[0] == "आपकी ELSS यूनिट 3 साल के लॉक-इन में हैं, इसलिए 896 दिन और नहीं बेच सकते। आप 4 अप्रैल 2029 से बेच सकेंगे।"
+
+
+def test_mocked_groq_payload_and_system_prompt_hindi(exit_cases):
+    """E.3 User message contains 'key_points_hi', and SYSTEM_PROMPT does not contain 'फंड' (without dot), 'प्रतीक्षा' or 'वेटिंग'."""
+    res_a, _, _ = exit_cases
+
+    with patch("app.services.exit_ai.settings.GROQ_API_KEY", "mock-groq-api-key"), \
+         patch("app.services.exit_ai.Groq") as mock_groq_cls:
+        mock_client = mock_groq_cls.return_value
+        mock_client.chat.completions.create.return_value.choices = [
+            MagicMock(message=MagicMock(content=json.dumps({"en": "Valid", "hi": "सटीक"})))
+        ]
+
+        generate_exit_explanation(res_a)
+
+        _, kwargs = mock_client.chat.completions.create.call_args
+        messages = kwargs["messages"]
+        user_content = next(m["content"] for m in messages if m["role"] == "user")
+
+        assert "key_points_hi" in user_content
+        assert "फंड" not in SYSTEM_PROMPT
+        assert "प्रतीक्षा" not in user_content
+        assert "वेटिंग" not in user_content
+        assert "Do not use प्रतीक्षा, इंतज़ार, इंतजार or वेटिंग" in SYSTEM_PROMPT
+
+
+def test_guard_missing_amount_from_key_points_returns_fallback(exit_cases):
+    """E.4 Guard test: a mocked answer that leaves out one amount from the key points (in en or in hi) returns fallback."""
+    res_a, _, _ = exit_cases
+    facts_a = build_facts(res_a)
+    pts_en = build_key_points(res_a, facts_a)
+    pts_hi = build_key_points_hi(res_a, facts_a)
+
+    # 1. Missing in English (e.g. drop first sentence which has ₹5,200)
+    en_missing = " ".join(pts_en[2:])
+    hi_full = " ".join(pts_hi)
+
+    with patch("app.services.exit_ai.settings.GROQ_API_KEY", "mock-groq-api-key"), \
+         patch("app.services.exit_ai.Groq") as mock_groq_cls:
+        mock_client = mock_groq_cls.return_value
+        mock_client.chat.completions.create.return_value.choices = [
+            MagicMock(message=MagicMock(content=json.dumps({"en": en_missing, "hi": hi_full})))
+        ]
+        explanation = generate_exit_explanation(res_a)
+        assert explanation["source"] == "fallback"
+
+    # 2. Missing in Hindi
+    en_full = " ".join(pts_en)
+    hi_missing = " ".join(pts_hi[2:])
+
+    with patch("app.services.exit_ai.settings.GROQ_API_KEY", "mock-groq-api-key"), \
+         patch("app.services.exit_ai.Groq") as mock_groq_cls:
+        mock_client = mock_groq_cls.return_value
+        mock_client.chat.completions.create.return_value.choices = [
+            MagicMock(message=MagicMock(content=json.dumps({"en": en_full, "hi": hi_missing})))
+        ]
+        explanation = generate_exit_explanation(res_a)
+        assert explanation["source"] == "fallback"
+
+
+def test_elss_locked_stay_flat_appears_once():
+    """Step 3e: for a Locked result, the English key points contain the phrase 'stay flat' exactly once in total, and the Hindi key points contain 'स्थिर' exactly once in total."""
+    today = date(2026, 10, 21)
+    req = ExitAnalysisRequest(
+        amount_invested=100000,
+        current_value=120000,
+        holding_period_days=200,
+        investment_type="Equity Fund",
+        fund_category="Equity: ELSS (Tax Saver - 3yr lock)",
+    )
+    res = calculate_exit_analysis(req, today=today)
+    facts = build_facts(res)
+    points_en = build_key_points(res, facts)
+    points_hi = build_key_points_hi(res, facts)
+
+    combined_en = " ".join(points_en)
+    combined_hi = " ".join(points_hi)
+
+    assert combined_en.count("stay flat") == 1
+    assert combined_hi.count("स्थिर") == 1
+
+

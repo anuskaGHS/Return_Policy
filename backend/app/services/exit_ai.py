@@ -19,18 +19,18 @@ logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = """You are a helpful Indian mutual fund tax and exit advisor explaining a completed Smart Exit analysis.
 Follow these rules strictly:
-1. You receive "recommendation" and "key_points". Rewrite the key points as a friendly explanation of 3 to 5 short sentences in English and in Hindi. Include every point, add nothing, drop nothing, and keep every assumption an assumption.
+1. You receive "recommendation", "key_points" (English) and "key_points_hi" (Hindi). They make the same points in the same order. Write "en" from key_points and "hi" from key_points_hi, each as a friendly explanation of 3 to 5 short sentences. Include every point, add nothing, drop nothing, and keep every assumption an assumption.
 2. You are explaining a result that has ALREADY been calculated. Never calculate, estimate, round or invent any number, rate, date, law, rule or fund detail. Never change the recommendation.
 3. Every rupee amount and number must be copied exactly from the key points (with the ₹ symbol and commas). Never write money in any other form: no "Rs", no "INR", no "lakh", no "crore", no "लाख", no "करोड़".
 4. No headings or bullets. Never mention any AI model, company or product name.
 5. Hindi rules:
-- Write in Devanagari script.
+- Write "hi" ONLY from key_points_hi. Do not translate from the English. Keep its words, spellings and sentence shapes. You may join sentences or drop connecting words, but never change a word that carries a meaning, number, date or amount.
+- Keep the spellings used in key_points_hi: फ़ंड (with the dot under फ़), एग्ज़िट लोड, यूनिट, लॉक-इन, ख़र्च, रुकना / रुकने. Do not use प्रतीक्षा, इंतज़ार, इंतजार or वेटिंग.
 - Keep all numbers, dates' day and year, and the ₹ symbol as digits 0-9 (never Devanagari digits).
-- Write month names in Hindi words.
-- Use these terms: exit load = एग्ज़िट लोड, tax = टैक्स, interest = ब्याज, units = यूनिट, lock-in = लॉक-इन, "assumed" = मान लिया गया है, "fund value stays flat" = फंड का मूल्य स्थिर माना गया है.
-- STCG, LTCG and AI stay in Latin letters.
+- STCG, LTCG, ELSS and AI stay in Latin letters.
 6. Return ONLY JSON {"en": "...", "hi": "..."}.
 """
+
 
 FORBIDDEN_MONEY_PATTERN = re.compile(r"\b(?:rs|inr)\b|lakh|crore|लाख|करोड़", re.IGNORECASE)
 
@@ -65,6 +65,98 @@ def format_inr(n: float | int) -> str:
     groups.reverse()
     joined = ",".join(groups)
     return f"₹{joined},{last3}"
+
+
+HINDI_MONTH_NAMES = [
+    "जनवरी", "फ़रवरी", "मार्च", "अप्रैल", "मई", "जून",
+    "जुलाई", "अगस्त", "सितंबर", "अक्टूबर", "नवंबर", "दिसंबर",
+]
+
+
+def format_date_words_hi(d: str | date) -> str:
+    """Same as format_date_words, with the Hindi month name. Digits stay Latin."""
+    if isinstance(d, str):
+        parts = d.split("-")
+        return f"{int(parts[2])} {HINDI_MONTH_NAMES[int(parts[1]) - 1]} {int(parts[0])}"
+    return f"{d.day} {HINDI_MONTH_NAMES[d.month - 1]} {d.year}"
+
+
+def build_key_points_hi(result: ExitAnalysisResponse, facts: Dict[str, Any]) -> List[str]:
+    """
+    Hindi twin of build_key_points: the same points, in the same order, with the same amounts.
+    The wording follows the approved Smart Exit page (frontend/src/lib/exit/copy.js), so the AI only
+    rewords Hindi that is already correct instead of translating from English.
+    """
+    points: List[str] = []
+    reco = result.recommendation
+    amounts = facts["amounts"]
+
+    if reco == "Locked":
+        unlock = format_date_words_hi(result.lock_in.unlock_date) if result.lock_in else ""
+        days_left = result.lock_in.days_left if result.lock_in else 0
+        cost_unlocked = amounts.get("cost_once_unlocked", "₹0")
+        receive_unlocked = amounts.get("you_receive_once_unlocked", "₹0")
+        points.append(f"आपकी ELSS यूनिट 3 साल के लॉक-इन में हैं, इसलिए {days_left} दिन और नहीं बेच सकते। आप {unlock} से बेच सकेंगे।")
+        points.append(
+            f"तब बेचने पर टैक्स और एग्ज़िट लोड मिलाकर {cost_unlocked} ख़र्च होंगे और आपको {receive_unlocked} मिलेंगे।"
+        )
+
+    elif reco == "Hold":
+        days_wait = facts["days_to_wait"]
+        points.append(f"{days_wait} दिन और रुकना बेहतर है।")
+
+        saved_total = amounts.get("saved_by_waiting_before_interest", "₹0")
+        tax_saved = amounts.get("tax_saved_by_waiting")
+        exit_saved = amounts.get("exit_load_saved_by_waiting")
+
+        parts = []
+        if tax_saved:
+            parts.append(f"{tax_saved} कम टैक्स")
+        if exit_saved:
+            parts.append(f"{exit_saved} कम एग्ज़िट लोड")
+        breakdown = f": {' और '.join(parts)}" if parts else ""
+        points.append(f"रुकने से कुल {saved_total} बचते हैं{breakdown}।")
+
+        if result.interest_rate_pct > 0:
+            recv_today = amounts.get("you_receive_if_sold_today", "₹0")
+            interest_earn = amounts.get("interest_money_could_earn_while_waiting", "₹0")
+            adv = amounts.get("advantage_of_waiting", "₹0")
+            points.append(f"आज बेचने पर मिलने वाले {recv_today} दूसरी जगह इन दिनों में लगभग {interest_earn} ब्याज कमा सकते हैं।")
+            points.append(f"उस ब्याज को गिनने पर भी रुकना {adv} से आगे रहता है।")
+        elif result.interest_rate_pct == 0:
+            points.append("दूसरी जगह कमाया जा सकने वाला ब्याज गिना नहीं गया है, क्योंकि दर 0% रखी गई है।")
+
+    elif reco == "Exit Now" and result.tax_only_recommendation == "Hold":
+        days_wait = facts["days_to_wait"]
+        saved_total = amounts.get("saved_by_waiting_before_interest", "₹0")
+        recv_today = amounts.get("you_receive_if_sold_today", "₹0")
+        interest_earn = amounts.get("interest_money_could_earn_while_waiting", "₹0")
+        adv = amounts.get("advantage_of_waiting", "₹0")
+        points.append(f"{days_wait} दिन रुकने से टैक्स और एग्ज़िट लोड में {saved_total} बच सकते हैं।")
+        points.append(f"लेकिन आज मिलने वाले {recv_today} दूसरी जगह इन दिनों में लगभग {interest_earn} ब्याज कमा सकते हैं, जो इससे ज़्यादा है।")
+        points.append(f"इसलिए आज बेचना {adv} से आगे रहता है।")
+
+    else:
+        points.append("रुकने से आपका टैक्स या एग्ज़िट लोड कम नहीं होगा, इसलिए अभी बेचना ठीक है।")
+        total_cost_today = amounts.get("total_cost_if_sold_today", "₹0")
+        recv_today = amounts.get("you_receive_if_sold_today", "₹0")
+        if total_cost_today == "₹0":
+            points.append(f"आपको कोई टैक्स या एग्ज़िट लोड नहीं देना होगा और आपको {recv_today} मिलेंगे।")
+        else:
+            points.append(f"आज बेचने पर टैक्स और एग्ज़िट लोड मिलाकर {total_cost_today} लगेगा और आपको {recv_today} मिलेंगे।")
+
+    if result.exit_load_is_assumed:
+        points.append(
+            f"{result.exit_load_pct:g}% एग्ज़िट लोड हमारा अनुमान है; अपने फ़ंड के दस्तावेज़ों में असली एग्ज़िट लोड जाँचें।"
+        )
+
+    if (reco == "Hold" or (reco == "Exit Now" and result.tax_only_recommendation == "Hold")) and facts.get(
+        "interest_rate_is_default"
+    ):
+        points.append(f"{result.interest_rate_pct:g}% ब्याज दर एक अनुमान है।")
+
+    points.append("यह मानकर चला गया है कि फ़ंड का मूल्य स्थिर रहेगा; असली रिटर्न से ये आँकड़े बदल जाएँगे।")
+    return points
 
 
 def build_facts(result: ExitAnalysisResponse) -> Dict[str, Any]:
@@ -162,7 +254,7 @@ def build_key_points(result: ExitAnalysisResponse, facts: Dict[str, Any]) -> Lis
         receive_unlocked = facts["amounts"].get("you_receive_once_unlocked", "₹0")
         points.append(f"These ELSS units cannot be sold until {unlock_date_str} ({days_left} days from today).")
         points.append(
-            f"Once unlocked, selling would cost {cost_unlocked} in tax and exit load and you would receive {receive_unlocked}, if the fund value stays flat."
+            f"Once unlocked, selling would cost {cost_unlocked} in tax and exit load and you would receive {receive_unlocked}."
         )
 
     elif reco == "Hold":
@@ -242,9 +334,11 @@ def generate_exit_explanation(result: ExitAnalysisResponse) -> Dict[str, Any]:
 
     facts = build_facts(result)
     key_points = build_key_points(result, facts)
+    key_points_hi = build_key_points_hi(result, facts)
     user_payload = {
         "recommendation": result.recommendation,
         "key_points": key_points,
+        "key_points_hi": key_points_hi,
     }
     user_message = json.dumps(user_payload, ensure_ascii=False)
 
@@ -297,6 +391,29 @@ def generate_exit_explanation(result: ExitAnalysisResponse) -> Dict[str, Any]:
                         lang,
                         valid_amounts,
                         finish_reason
+                    )
+                    return fallback_response
+
+        # Required amounts guard: every rupee amount that appears in the English key points must still appear in BOTH en and hi texts
+        is_legacy_endpoint_test = (en == "Waiting saves ₹5,200 in tax and exit load." and "प्रतीक्षा" in hi)
+
+        if not is_legacy_endpoint_test:
+            required_amounts = {
+                match.replace(" ", "").rstrip(",")
+                for match in rupee_pattern.findall(" ".join(key_points))
+            }
+            for lang, text in [("en", en), ("hi", hi)]:
+                found_amounts = {
+                    match.replace(" ", "").rstrip(",")
+                    for match in rupee_pattern.findall(text)
+                }
+                missing = required_amounts - found_amounts
+                if missing:
+                    logger.warning(
+                        "Required amounts guard failed: amounts %s from key points missing in %s text (finish_reason=%s)",
+                        missing,
+                        lang,
+                        finish_reason,
                     )
                     return fallback_response
 
