@@ -701,3 +701,75 @@ def test_elss_locked_stay_flat_appears_once():
     assert combined_hi.count("स्थिर") == 1
 
 
+def test_exit_load_assumption_suppression_for_long_term_equity():
+    """Checks exit-load assumption sentence behavior in both English and Hindi:
+    - equity, 400 days, no typed load: no exit-load assumption sentence
+    - equity, 200 days, no typed load: sentence is present
+    - debt, no typed load: sentence is present (0% assumed)
+    - equity, 400 days, typed load 0.5: no assumption sentence
+    """
+    today = date(2026, 10, 21)
+
+    # 1. Equity, 400 days, no typed load -> suppressed
+    req_eq_400 = ExitAnalysisRequest(
+        amount_invested=100000,
+        current_value=120000,
+        holding_period_days=400,
+        investment_type="Equity Fund",
+        fund_category="Equity: Flexi Cap / Large Cap",
+    )
+    res_eq_400 = calculate_exit_analysis(req_eq_400, today=today)
+    facts_eq_400 = build_facts(res_eq_400)
+    pts_en_400 = build_key_points(res_eq_400, facts_eq_400)
+    pts_hi_400 = build_key_points_hi(res_eq_400, facts_eq_400)
+    assert not any("exit load" in p.lower() and "assumption" in p.lower() for p in pts_en_400)
+    assert not any("एग्ज़िट लोड" in p and "अनुमान" in p for p in pts_hi_400)
+
+    # 2. Equity, 200 days, no typed load -> present (1% assumed)
+    req_eq_200 = ExitAnalysisRequest(
+        amount_invested=100000,
+        current_value=120000,
+        holding_period_days=200,
+        investment_type="Equity Fund",
+        fund_category="Equity: Flexi Cap / Large Cap",
+    )
+    res_eq_200 = calculate_exit_analysis(req_eq_200, today=today)
+    facts_eq_200 = build_facts(res_eq_200)
+    pts_en_200 = build_key_points(res_eq_200, facts_eq_200)
+    pts_hi_200 = build_key_points_hi(res_eq_200, facts_eq_200)
+    assert any("The exit load of 1% is an assumption" in p for p in pts_en_200)
+    assert any("1% एग्ज़िट लोड हमारा अनुमान है" in p for p in pts_hi_200)
+
+    # 3. Debt, no typed load -> present (0% assumed)
+    req_debt = ExitAnalysisRequest(
+        amount_invested=200000,
+        current_value=220000,
+        holding_period_days=400,
+        investment_type="Debt Fund",
+        fund_category="Debt: Corporate Bond Fund",
+    )
+    res_debt = calculate_exit_analysis(req_debt, today=today)
+    facts_debt = build_facts(res_debt)
+    pts_en_debt = build_key_points(res_debt, facts_debt)
+    pts_hi_debt = build_key_points_hi(res_debt, facts_debt)
+    assert any("The exit load of 0% is an assumption" in p for p in pts_en_debt)
+    assert any("0% एग्ज़िट लोड हमारा अनुमान है" in p for p in pts_hi_debt)
+
+    # 4. Equity, 400 days, typed load 0.5 -> no assumption sentence
+    req_eq_typed = ExitAnalysisRequest(
+        amount_invested=100000,
+        current_value=120000,
+        holding_period_days=400,
+        exit_load_pct=0.5,
+        investment_type="Equity Fund",
+        fund_category="Equity: Flexi Cap / Large Cap",
+    )
+    res_eq_typed = calculate_exit_analysis(req_eq_typed, today=today)
+    facts_eq_typed = build_facts(res_eq_typed)
+    pts_en_typed = build_key_points(res_eq_typed, facts_eq_typed)
+    pts_hi_typed = build_key_points_hi(res_eq_typed, facts_eq_typed)
+    assert not any("exit load" in p.lower() and "assumption" in p.lower() for p in pts_en_typed)
+    assert not any("एग्ज़िट लोड" in p and "अनुमान" in p for p in pts_hi_typed)
+
+
+

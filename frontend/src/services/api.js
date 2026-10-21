@@ -379,7 +379,8 @@ function buildAssumptionNotes(r, is_equity) {
 
 function buildRuleFlags(r, is_equity, is_elss) {
   const flags = [];
-  if (r.exit_load_is_assumed) {
+  const skipExitLoadAssumption = is_equity && !is_elss && r.exit_load_is_assumed && r.exit_load_pct === 0;
+  if (r.exit_load_is_assumed && !skipExitLoadAssumption) {
     flags.push(is_equity
       ? "Exit load is our assumption (1% on a sale within a year), used only as an example. Each fund sets its own. Find yours under “Exit load” in the fund’s SID, KIM or factsheet, or enter it yourself."
       : "Exit load is assumed to be 0%, which is an assumption. Some debt funds charge one. Find yours under “Exit load” in the fund’s SID, KIM or factsheet, or enter it yourself.");

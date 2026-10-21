@@ -145,7 +145,15 @@ def build_key_points_hi(result: ExitAnalysisResponse, facts: Dict[str, Any]) -> 
         else:
             points.append(f"आज बेचने पर टैक्स और एग्ज़िट लोड मिलाकर {total_cost_today} लगेगा और आपको {recv_today} मिलेंगे।")
 
-    if result.exit_load_is_assumed:
+    is_equity = "equity" in result.investment_type.lower()
+    is_elss = is_equity and ("ELSS" in (result.fund_category or ""))
+    skip_exit_load_assumption = (
+        is_equity
+        and not is_elss
+        and result.exit_load_is_assumed
+        and result.exit_load_pct == 0
+    )
+    if result.exit_load_is_assumed and not skip_exit_load_assumption:
         points.append(
             f"{result.exit_load_pct:g}% एग्ज़िट लोड हमारा अनुमान है; अपने फ़ंड के दस्तावेज़ों में असली एग्ज़िट लोड जाँचें।"
         )
@@ -307,7 +315,15 @@ def build_key_points(result: ExitAnalysisResponse, facts: Dict[str, Any]) -> Lis
             points.append(f"Selling today costs {total_cost_today} in tax and exit load and you receive {recv_today}.")
 
     # Assumption points (append):
-    if result.exit_load_is_assumed:
+    is_equity = "equity" in result.investment_type.lower()
+    is_elss = is_equity and ("ELSS" in (result.fund_category or ""))
+    skip_exit_load_assumption = (
+        is_equity
+        and not is_elss
+        and result.exit_load_is_assumed
+        and result.exit_load_pct == 0
+    )
+    if result.exit_load_is_assumed and not skip_exit_load_assumption:
         points.append(
             f"The exit load of {result.exit_load_pct:g}% is an assumption; check the real exit load in your fund's documents."
         )
