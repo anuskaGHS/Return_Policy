@@ -38,7 +38,7 @@ export default function FundForm({ x }) {
       'हमने जो ELSS फ़ंड देखे, उनमें कोई एग्ज़िट लोड नहीं है, इसलिए हम 0% मानते हैं और यह बॉक्स इस्तेमाल नहीं होता। अपने फ़ंड के SID में जाँच लें।'
     )
     : (v.eq
-      ? (ldSet ? using : L('Leave empty and we assume 1% on a sale within a year.', 'खाली छोड़ें तो हम 1 वर्ष के भीतर बेचने पर 1% मान लेंगे।'))
+      ? (ldSet ? using : L('Leave empty and we assume 1% if you sell within a year.', 'खाली छोड़ें तो हम 1 वर्ष के भीतर बेचने पर 1% मान लेंगे।'))
       : (ldSet ? using : L('Leave empty and we assume no exit load.', 'खाली छोड़ें तो हम मान लेंगे कि कोई एग्ज़िट लोड नहीं है।')));
 
   return (

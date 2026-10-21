@@ -277,7 +277,7 @@ export function ruleTiles(v, loadText, lang) {
         cls: 'r3', kick: L('Exit load', 'एग्ज़िट लोड'), tag: custom ? null : { text: L('Assumed', 'अनुमान'), warn: true }, big: custom ? `${loadText}%` : '1%',
         p: custom
           ? L('The load you entered. It is used in the numbers above.', 'यह आपका डाला हुआ लोड है। ऊपर के आँकड़ों में यही इस्तेमाल हुआ है।')
-          : L('We assume 1% on a sale within a year, only as an example. Each fund sets its own, so enter yours under “Custom exit load and interest rate”.', 'हम 1 वर्ष के भीतर बेचने पर 1% मान लेते हैं, सिर्फ़ उदाहरण के लिए। हर फ़ंड का अपना लोड होता है, इसलिए अपना लोड “अपना एग्ज़िट लोड और ब्याज दर” में डालें।'),
+          : L('We assume 1% if you sell within a year, only as an example. Each fund sets its own, so enter yours under “Custom exit load and interest rate”.', 'हम 1 वर्ष के भीतर बेचने पर 1% मान लेते हैं, सिर्फ़ उदाहरण के लिए। हर फ़ंड का अपना लोड होता है, इसलिए अपना लोड “अपना एग्ज़िट लोड और ब्याज दर” में डालें।'),
         foot: custom ? L('Check it in the SID, KIM or factsheet', 'SID, KIM या फ़ैक्टशीट में जाँचें') : L('Find yours in the SID, KIM or factsheet', 'अपना लोड SID, KIM या फ़ैक्टशीट में देखें'),
       };
     return [
