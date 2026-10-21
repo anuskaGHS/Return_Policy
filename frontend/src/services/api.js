@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+const API_BASE_URL = import.meta.env?.VITE_API_URL || "http://localhost:8000/api";
 
 export async function checkBackendHealth() {
   try {
@@ -76,7 +76,8 @@ const dateEn = (iso) => { const [y, m, d] = iso.split("-").map(Number); return `
 
 /** Days between 1 April 2023 and today. A debt fund held for more days than this was bought before 1 April 2023. */
 export function daysSinceDebtRuleStart(now = new Date()) {
-  return Math.floor((now.getTime() - DEBT_RULE_START_UTC) / DAY_MS);
+  const todayUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()); // today's calendar date, not the clock time
+  return Math.round((todayUtc - DEBT_RULE_START_UTC) / DAY_MS);
 }
 
 /**
