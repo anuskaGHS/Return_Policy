@@ -201,6 +201,9 @@ class ExitAnalysisResponse(BaseModel):
     recommendation_summary: str = Field(default="", description="Plain-language directive including days to wait and rupee savings")
     assumption_notes: List[str] = Field(default_factory=list, description="Explicit assumptions and flat-value caveats")
     rule_flags: List[str] = Field(default_factory=list, description="Statutory verification flags")
+    ai_explanation_en: Optional[str] = Field(default=None, description="AI-generated plain language exit explanation in English")
+    ai_explanation_hi: Optional[str] = Field(default=None, description="AI-generated plain language exit explanation in Hindi")
+    ai_source: str = Field(default="fallback", description="'ai' when the explanation was written by the AI, 'fallback' when the page should use its own summary")
 
 
 class LoanOptimizerRequest(BaseModel):

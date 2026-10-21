@@ -12,6 +12,7 @@ from app.services.groq_service import generate_ai_assessment
 from app.services.health_score import compute_health_score
 from app.services.tax_engine import calculate_exit_analysis
 from app.services.loan_optimizer import calculate_loan_vs_invest
+from app.services.exit_ai import generate_exit_explanation
 from app.config import settings
 
 router = APIRouter(prefix="/api", tags=["Policy & Wealth Simulation"])
@@ -71,9 +72,10 @@ def get_exit_analysis(request: ExitAnalysisRequest):
     """
     Evaluates whether an investor should exit their mutual fund investment today or hold until the LTCG window.
     Calculates deterministic STCG vs LTCG tax, exit load, days to the LTCG window, interest the money could earn while waiting, and the ELSS 3-year lock.
+    The AI only explains the finished numbers and the response falls back to ai_source 'fallback' if it fails.
     """
     try:
-        return calculate_exit_analysis(req=request)
+        result = calculate_exit_analysis(req=request)
     except ValueError as e:
         raise HTTPException(
             status_code=422,
@@ -89,6 +91,13 @@ def get_exit_analysis(request: ExitAnalysisRequest):
             status_code=500,
             detail=f"Exit tax analysis failed: {str(e)}"
         )
+
+    ex = generate_exit_explanation(result)
+    return result.model_copy(update={
+        "ai_explanation_en": ex["en"],
+        "ai_explanation_hi": ex["hi"],
+        "ai_source": ex["source"]
+    })
 
 @router.post("/loan-optimizer", response_model=LoanOptimizerResponse)
 def optimize_loan(request: LoanOptimizerRequest):

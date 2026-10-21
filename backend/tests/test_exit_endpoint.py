@@ -2,6 +2,7 @@ import sys
 import os
 import json
 from pathlib import Path
+from unittest.mock import patch, MagicMock
 import pytest
 from fastapi.testclient import TestClient
 
@@ -10,6 +11,13 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 from main import app
 
 client = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def disable_groq_api_key_by_default():
+    """Ensure no endpoint tests accidentally reach the network unless explicitly mocked."""
+    with patch("app.services.exit_ai.settings.GROQ_API_KEY", ""):
+        yield
 
 FIXTURE_PATH = Path(__file__).resolve().parents[2] / "reference" / "exit_cases.json"
 
@@ -202,4 +210,148 @@ def test_too_long_held():
     response = client.post("/api/exit-analysis", json=payload)
     assert response.status_code == 422
     assert response.json()["detail"] == "That number is too large to calculate."
+
+
+def test_ai_explanation_good_mocked_reply():
+    """A. Good mocked reply -> 200, ai_source == 'ai', explanations equal mocked texts, no 'groq' in response text."""
+    payload = {
+        "investment_type": "Equity Fund",
+        "fund_category": "Equity: Flexi Cap / Large Cap",
+        "amount_invested": 100000,
+        "current_value": 120000,
+        "holding_period_days": 200,
+    }
+    mock_en = "Waiting saves ₹5,200 in tax and exit load."
+    mock_hi = "प्रतीक्षा करने से कर में ₹5,200 की बचत होती है।"
+    with patch("app.services.exit_ai.settings.GROQ_API_KEY", "mock-key"), \
+         patch("app.services.exit_ai.Groq") as mock_groq_cls:
+        mock_client = mock_groq_cls.return_value
+        mock_client.chat.completions.create.return_value.choices = [
+            MagicMock(message=MagicMock(content=json.dumps({"en": mock_en, "hi": mock_hi})))
+        ]
+        response = client.post("/api/exit-analysis", json=payload)
+        assert response.status_code == 200
+        data = response.json()
+        assert data["ai_source"] == "ai"
+        assert data["ai_explanation_en"] == mock_en
+        assert data["ai_explanation_hi"] == mock_hi
+        assert "groq" not in response.text.lower()
+
+
+def test_ai_explanation_no_key():
+    """B. No key -> 200, ai_source == 'fallback', both explanations None, numbers still present."""
+    payload = {
+        "investment_type": "Equity Fund",
+        "fund_category": "Equity: Flexi Cap / Large Cap",
+        "amount_invested": 100000,
+        "current_value": 120000,
+        "holding_period_days": 200,
+    }
+    with patch("app.services.exit_ai.settings.GROQ_API_KEY", ""):
+        response = client.post("/api/exit-analysis", json=payload)
+        assert response.status_code == 200
+        data = response.json()
+        assert data["ai_source"] == "fallback"
+        assert data["ai_explanation_en"] is None
+        assert data["ai_explanation_hi"] is None
+        assert data["recommendation"] == "Hold"
+
+
+def test_ai_explanation_groq_raises():
+    """C. Groq raises -> 200, ai_source 'fallback'."""
+    payload = {
+        "investment_type": "Equity Fund",
+        "fund_category": "Equity: Flexi Cap / Large Cap",
+        "amount_invested": 100000,
+        "current_value": 120000,
+        "holding_period_days": 200,
+    }
+    with patch("app.services.exit_ai.settings.GROQ_API_KEY", "mock-key"), \
+         patch("app.services.exit_ai.Groq") as mock_groq_cls:
+        mock_client = mock_groq_cls.return_value
+        mock_client.chat.completions.create.side_effect = RuntimeError("Groq connection error")
+        response = client.post("/api/exit-analysis", json=payload)
+        assert response.status_code == 200
+        data = response.json()
+        assert data["ai_source"] == "fallback"
+        assert data["ai_explanation_en"] is None
+        assert data["ai_explanation_hi"] is None
+
+
+def test_ai_explanation_wrong_rupee_amount():
+    """D. Reply contains a wrong rupee amount (e.g. '₹99,999') -> 200 and ai_source 'fallback'."""
+    payload = {
+        "investment_type": "Equity Fund",
+        "fund_category": "Equity: Flexi Cap / Large Cap",
+        "amount_invested": 100000,
+        "current_value": 120000,
+        "holding_period_days": 200,
+    }
+    with patch("app.services.exit_ai.settings.GROQ_API_KEY", "mock-key"), \
+         patch("app.services.exit_ai.Groq") as mock_groq_cls:
+        mock_client = mock_groq_cls.return_value
+        mock_client.chat.completions.create.return_value.choices = [
+            MagicMock(message=MagicMock(content=json.dumps({
+                "en": "You receive ₹99,999 if you sell today.",
+                "hi": "यदि आप आज बेचते हैं तो आपको ₹99,999 मिलेंगे।"
+            })))
+        ]
+        response = client.post("/api/exit-analysis", json=payload)
+        assert response.status_code == 200
+        data = response.json()
+        assert data["ai_source"] == "fallback"
+        assert data["ai_explanation_en"] is None
+        assert data["ai_explanation_hi"] is None
+
+
+def test_ai_explanation_same_numbers_with_and_without_ai():
+    """E. Same numbers with and without AI: post the same payload under test A's mock and under test B's setup."""
+    payload = {
+        "investment_type": "Equity Fund",
+        "fund_category": "Equity: Flexi Cap / Large Cap",
+        "amount_invested": 100000,
+        "current_value": 120000,
+        "holding_period_days": 200,
+    }
+    # With AI
+    mock_en = "Waiting saves ₹5,200 in tax and exit load."
+    mock_hi = "प्रतीक्षा करने से कर में ₹5,200 की बचत होती है।"
+    with patch("app.services.exit_ai.settings.GROQ_API_KEY", "mock-key"), \
+         patch("app.services.exit_ai.Groq") as mock_groq_cls:
+        mock_client = mock_groq_cls.return_value
+        mock_client.chat.completions.create.return_value.choices = [
+            MagicMock(message=MagicMock(content=json.dumps({"en": mock_en, "hi": mock_hi})))
+        ]
+        res_with_ai = client.post("/api/exit-analysis", json=payload)
+        assert res_with_ai.status_code == 200
+        data_with_ai = res_with_ai.json()
+
+    # Without AI
+    with patch("app.services.exit_ai.settings.GROQ_API_KEY", ""):
+        res_without_ai = client.post("/api/exit-analysis", json=payload)
+        assert res_without_ai.status_code == 200
+        data_without_ai = res_without_ai.json()
+
+    for key in ["ai_explanation_en", "ai_explanation_hi", "ai_source"]:
+        data_with_ai.pop(key, None)
+        data_without_ai.pop(key, None)
+
+    assert data_with_ai == data_without_ai
+
+
+def test_ai_explanation_invalid_input_does_not_call_groq():
+    """F. Invalid input (blank amount_invested) -> 422 and the mocked Groq create method was NOT called."""
+    payload = {
+        "investment_type": "Equity Fund",
+        "amount_invested": "",
+        "current_value": 120000,
+        "holding_period_days": 200,
+    }
+    with patch("app.services.exit_ai.settings.GROQ_API_KEY", "mock-key"), \
+         patch("app.services.exit_ai.Groq") as mock_groq_cls:
+        mock_client = mock_groq_cls.return_value
+        response = client.post("/api/exit-analysis", json=payload)
+        assert response.status_code == 422
+        mock_client.chat.completions.create.assert_not_called()
+
 
