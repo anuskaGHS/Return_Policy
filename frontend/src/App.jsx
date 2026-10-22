@@ -5,11 +5,6 @@ import AboutPage from './pages/AboutPage';
 import WhatIfPage from './pages/WhatIfPage';
 import ExitPage from './pages/ExitPage';
 import { derive } from './lib/whatif/healthScore.js';
-import FinancialSliders from './components/FinancialSliders';
-import ScoreGauge from './components/ScoreGauge';
-import WealthCard from './components/WealthCard';
-import DebtRatioCard from './components/DebtRatioCard';
-import ActionPlan from './components/ActionPlan';
 import ErrorBanner from './components/ErrorBanner';
 import { simulatePolicy, checkBackendHealth } from './services/api';
 
