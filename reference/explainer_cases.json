@@ -1,0 +1,333 @@
+{
+  "description": "Shared test cases for Return Explainer attribution engine. Valid cases provide expected attribution results and invalid cases test input validation.",
+  "note": "Test-only numbers, not real funds.",
+  "cases": [
+    {
+      "name": "fund trails, IT overweight",
+      "input": {
+        "fund_return_pct": 6.0,
+        "benchmark_return_pct": 12.0,
+        "fund_weights": {
+          "IT": 38.0,
+          "Financials": 24.0,
+          "Other": 38.0
+        },
+        "benchmark_weights": {
+          "IT": 12.0,
+          "Financials": 36.0,
+          "Other": 52.0
+        },
+        "sector_returns": {
+          "IT": -4.0,
+          "Financials": 8.0,
+          "Other": 15.0
+        }
+      },
+      "expected": {
+        "gap_pts": -6.0,
+        "explained_pts": -4.1,
+        "unexplained_pts": -1.9,
+        "top_drivers": [
+          "IT"
+        ],
+        "sectors": [
+          {
+            "sector": "IT",
+            "fund_weight_pct": 38.0,
+            "benchmark_weight_pct": 12.0,
+            "active_weight_pct": 26.0,
+            "sector_return_pct": -4.0,
+            "relative_return_pct": -16.0,
+            "effect_pts": -4.2
+          },
+          {
+            "sector": "Financials",
+            "fund_weight_pct": 24.0,
+            "benchmark_weight_pct": 36.0,
+            "active_weight_pct": -12.0,
+            "sector_return_pct": 8.0,
+            "relative_return_pct": -4.0,
+            "effect_pts": 0.5
+          },
+          {
+            "sector": "Other",
+            "fund_weight_pct": 38.0,
+            "benchmark_weight_pct": 52.0,
+            "active_weight_pct": -14.0,
+            "sector_return_pct": 15.0,
+            "relative_return_pct": 3.0,
+            "effect_pts": -0.4
+          }
+        ]
+      }
+    },
+    {
+      "name": "fund beats",
+      "input": {
+        "fund_return_pct": 14.0,
+        "benchmark_return_pct": 10.0,
+        "fund_weights": {
+          "IT": 38.0,
+          "Financials": 24.0,
+          "Other": 38.0
+        },
+        "benchmark_weights": {
+          "IT": 12.0,
+          "Financials": 36.0,
+          "Other": 52.0
+        },
+        "sector_returns": {
+          "IT": 20.0,
+          "Financials": 4.0,
+          "Other": 8.0
+        }
+      },
+      "expected": {
+        "gap_pts": 4.0,
+        "explained_pts": 3.6,
+        "unexplained_pts": 0.4,
+        "top_drivers": [
+          "IT",
+          "Financials"
+        ],
+        "sectors": [
+          {
+            "sector": "IT",
+            "fund_weight_pct": 38.0,
+            "benchmark_weight_pct": 12.0,
+            "active_weight_pct": 26.0,
+            "sector_return_pct": 20.0,
+            "relative_return_pct": 10.0,
+            "effect_pts": 2.6
+          },
+          {
+            "sector": "Financials",
+            "fund_weight_pct": 24.0,
+            "benchmark_weight_pct": 36.0,
+            "active_weight_pct": -12.0,
+            "sector_return_pct": 4.0,
+            "relative_return_pct": -6.0,
+            "effect_pts": 0.7
+          },
+          {
+            "sector": "Other",
+            "fund_weight_pct": 38.0,
+            "benchmark_weight_pct": 52.0,
+            "active_weight_pct": -14.0,
+            "sector_return_pct": 8.0,
+            "relative_return_pct": -2.0,
+            "effect_pts": 0.3
+          }
+        ]
+      }
+    },
+    {
+      "name": "same mix as benchmark",
+      "input": {
+        "fund_return_pct": 8.0,
+        "benchmark_return_pct": 10.0,
+        "fund_weights": {
+          "IT": 38.0,
+          "Financials": 24.0,
+          "Other": 38.0
+        },
+        "benchmark_weights": {
+          "IT": 38.0,
+          "Financials": 24.0,
+          "Other": 38.0
+        },
+        "sector_returns": {
+          "IT": -4.0,
+          "Financials": 8.0,
+          "Other": 15.0
+        }
+      },
+      "expected": {
+        "gap_pts": -2.0,
+        "explained_pts": 0.0,
+        "unexplained_pts": -2.0,
+        "top_drivers": [],
+        "sectors": [
+          {
+            "sector": "Financials",
+            "fund_weight_pct": 24.0,
+            "benchmark_weight_pct": 24.0,
+            "active_weight_pct": 0.0,
+            "sector_return_pct": 8.0,
+            "relative_return_pct": -2.0,
+            "effect_pts": 0.0
+          },
+          {
+            "sector": "IT",
+            "fund_weight_pct": 38.0,
+            "benchmark_weight_pct": 38.0,
+            "active_weight_pct": 0.0,
+            "sector_return_pct": -4.0,
+            "relative_return_pct": -14.0,
+            "effect_pts": 0.0
+          },
+          {
+            "sector": "Other",
+            "fund_weight_pct": 38.0,
+            "benchmark_weight_pct": 38.0,
+            "active_weight_pct": 0.0,
+            "sector_return_pct": 15.0,
+            "relative_return_pct": 5.0,
+            "effect_pts": 0.0
+          }
+        ]
+      }
+    },
+    {
+      "name": "sector missing on one side",
+      "input": {
+        "fund_return_pct": 5.0,
+        "benchmark_return_pct": 10.0,
+        "fund_weights": {
+          "IT": 50.0,
+          "Financials": 50.0
+        },
+        "benchmark_weights": {
+          "IT": 100.0
+        },
+        "sector_returns": {
+          "IT": 10.0,
+          "Financials": 0.0
+        }
+      },
+      "expected": {
+        "gap_pts": -5.0,
+        "explained_pts": -5.0,
+        "unexplained_pts": 0.0,
+        "top_drivers": [
+          "Financials"
+        ],
+        "sectors": [
+          {
+            "sector": "Financials",
+            "fund_weight_pct": 50.0,
+            "benchmark_weight_pct": 0.0,
+            "active_weight_pct": 50.0,
+            "sector_return_pct": 0.0,
+            "relative_return_pct": -10.0,
+            "effect_pts": -5.0
+          },
+          {
+            "sector": "IT",
+            "fund_weight_pct": 50.0,
+            "benchmark_weight_pct": 100.0,
+            "active_weight_pct": -50.0,
+            "sector_return_pct": 10.0,
+            "relative_return_pct": 0.0,
+            "effect_pts": 0.0
+          }
+        ]
+      }
+    },
+    {
+      "name": "invalid return below -100",
+      "input": {
+        "fund_return_pct": -105.0,
+        "benchmark_return_pct": 10.0,
+        "fund_weights": {
+          "IT": 50.0,
+          "Financials": 50.0
+        },
+        "benchmark_weights": {
+          "IT": 50.0,
+          "Financials": 50.0
+        },
+        "sector_returns": {
+          "IT": 10.0,
+          "Financials": 10.0
+        }
+      },
+      "expected": {
+        "valid": false,
+        "message": "A return cannot be below -100%."
+      }
+    },
+    {
+      "name": "invalid empty weights",
+      "input": {
+        "fund_return_pct": 10.0,
+        "benchmark_return_pct": 10.0,
+        "fund_weights": {},
+        "benchmark_weights": {
+          "IT": 100.0
+        },
+        "sector_returns": {
+          "IT": 10.0
+        }
+      },
+      "expected": {
+        "valid": false,
+        "message": "Add the sector weights for the fund and its benchmark."
+      }
+    },
+    {
+      "name": "invalid weight out of bounds",
+      "input": {
+        "fund_return_pct": 10.0,
+        "benchmark_return_pct": 10.0,
+        "fund_weights": {
+          "IT": 110.0,
+          "Financials": -10.0
+        },
+        "benchmark_weights": {
+          "IT": 100.0
+        },
+        "sector_returns": {
+          "IT": 10.0,
+          "Financials": 10.0
+        }
+      },
+      "expected": {
+        "valid": false,
+        "message": "Sector weights must be between 0 and 100."
+      }
+    },
+    {
+      "name": "invalid fund weights sum",
+      "input": {
+        "fund_return_pct": 10.0,
+        "benchmark_return_pct": 10.0,
+        "fund_weights": {
+          "IT": 40.0,
+          "Financials": 40.0
+        },
+        "benchmark_weights": {
+          "IT": 100.0
+        },
+        "sector_returns": {
+          "IT": 10.0,
+          "Financials": 10.0
+        }
+      },
+      "expected": {
+        "valid": false,
+        "message": "The fund's sector weights should add up to about 100%."
+      }
+    },
+    {
+      "name": "invalid missing sector returns",
+      "input": {
+        "fund_return_pct": 10.0,
+        "benchmark_return_pct": 10.0,
+        "fund_weights": {
+          "IT": 50.0,
+          "Financials": 50.0
+        },
+        "benchmark_weights": {
+          "IT": 50.0,
+          "Financials": 50.0
+        },
+        "sector_returns": {}
+      },
+      "expected": {
+        "valid": false,
+        "message": "Missing sector return for: Financials, IT"
+      }
+    }
+  ]
+}
