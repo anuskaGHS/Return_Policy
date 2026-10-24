@@ -26,6 +26,7 @@ class RetrievedDocument(SourceDocument):
 class RetrievalResult(BaseModel):
     mode: str
     documents: list[RetrievedDocument]
+    fallback_reason: Optional[str] = None
 
 
 class ExplainerDocumentsData(BaseModel):
