@@ -53,5 +53,6 @@ Thumbs.db
 !frontend/src/lib/
 
 # Reference & Prototype Assets
-reference/
+reference/*
+!reference/*.json
 
