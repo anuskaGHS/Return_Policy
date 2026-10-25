@@ -34,9 +34,70 @@ export const HOW_CARDS = [
   { palette: 'purple', num: '04', icon: 'list', title: 'You get a ranked plan', text: 'Three moves, in order, with the rupees at stake.', delay: '.22s' },
 ];
 
+export const PRODUCT_CARDS = [
+  {
+    palette: 'navy',
+    title: 'Decision Engine',
+    text: 'Try a choice before you make it, in rupees.',
+    bullets: [
+      'What-If Simulator: move a slider, watch the numbers',
+      'Smart Exit: hold or sell a fund',
+      'Return Explainer: why a fund lagged',
+      'Loan vs Investment: prepay or invest',
+    ],
+    btnText: 'Open Decision Engine',
+    delay: '.05s',
+  },
+  {
+    palette: 'emerald',
+    title: 'My Finances',
+    text: 'Add your own documents and see everything in one place.',
+    bullets: [
+      'SIP, loan, term policy, FD and salary documents in one dashboard',
+      'Health score and insurance gap check',
+      'Ask questions about your own numbers',
+    ],
+    btnText: 'Open My Finances',
+    delay: '.12s',
+  },
+];
+
 // Example answers (figures come from the project abstract).
 export const ASK_ROWS = [
   { palette: 'ice', num: '01', q: 'Should I exit this fund now or wait?', a: <>Exit today and you pay <b>₹5,000</b> in tax and exit load. Wait 47 more days and you save all of it.</>, verdict: 'Hold' },
   { palette: 'pink', num: '02', q: 'Am I losing money by not prepaying my loan?', a: <>Your loan costs <b>8.5%</b> a year and your fund has earned <b>12.3%</b>. Investing wins for now.</>, verdict: "Don't prepay yet" },
   { palette: 'emerald', num: '03', q: 'Is my insurance covering my real risk?', a: <>Your cover is <b>3x</b> your income against the recommended <b>10x</b>. That is your biggest gap.</>, verdict: 'Raise cover' },
 ];
+
+export const PRIVACY_CARDS = [
+  {
+    palette: 'ice',
+    num: '01',
+    title: 'Not saved on our servers',
+    text: 'Your PDFs are read in memory and never written to disk. Your confirmed numbers stay in this browser tab until you close it or press Clear my data.',
+    delay: '.04s',
+  },
+  {
+    palette: 'cream',
+    num: '02',
+    title: 'Personal details filtered',
+    text: 'Before anything goes to the AI, we remove names, addresses, PAN and account numbers, and send only the lines with the figures we need.',
+    delay: '.1s',
+  },
+  {
+    palette: 'yellow',
+    num: '03',
+    title: 'No sign-up',
+    text: 'There is no account to create. Try everything with sample data first.',
+    delay: '.16s',
+  },
+  {
+    palette: 'wine',
+    num: '04',
+    title: 'Code calculates',
+    text: 'Amounts are worked out by code. The AI only explains them in words.',
+    delay: '.22s',
+  },
+];
+
+export const PRIVACY_CAPTION = 'No filter is perfect, so remove personal details from files you upload if you can. The filtered lines are read by an outside AI service.';

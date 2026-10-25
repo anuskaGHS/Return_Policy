@@ -1,7 +1,16 @@
 import { Fragment, useEffect } from 'react';
 import '../styles/about.css';
 import { Icon } from '../data/homeFeatures.jsx';
-import { GAP_CARDS, GAP_SOURCES, NAME_CARDS, HOW_CARDS, ASK_ROWS } from '../data/aboutContent.jsx';
+import {
+  GAP_CARDS,
+  GAP_SOURCES,
+  NAME_CARDS,
+  HOW_CARDS,
+  PRODUCT_CARDS,
+  ASK_ROWS,
+  PRIVACY_CARDS,
+  PRIVACY_CAPTION,
+} from '../data/aboutContent.jsx';
 import ParticleScenes from '../components/about/ParticleScenes.jsx';
 import Reveal from '../components/about/Reveal.jsx';
 import { CardGroup, PalCard } from '../components/about/CardSelection.jsx';
@@ -11,9 +20,9 @@ const SCENE_IDS = ['ab-hero', 'ab-gap', 'ab-name', 'ab-how', 'ab-end'];
 
 /**
  * About page (product story). The site header is NOT rendered here: this assumes the app's shared header sits above it.
- * tryHref / homeHref: where the two closing buttons go (wire them to your router).
+ * tryHref / homeHref: where the closing buttons go (wire them to your router).
  */
-export default function AboutPage({ tryHref = '#', homeHref = '#' }) {
+export default function AboutPage({ tryHref = '#', homeHref = '#', financesHref = '#finances' }) {
   useEffect(() => {
     document.body.classList.add('ab-route');
     return () => {
@@ -103,7 +112,32 @@ export default function AboutPage({ tryHref = '#', homeHref = '#' }) {
             </CardGroup>
           </section>
 
-          {/* 5. ask: example questions */}
+          {/* 5. what you can use */}
+          <section className="ab-sec" id="ab-products" aria-labelledby="ab-products-h">
+            <Reveal className="ab-head">
+              <span className="ab-tag"><i></i>What you can use</span>
+              <h2 id="ab-products-h">Two tools, one picture.</h2>
+              <p>Test a decision, or look at your own money.</p>
+            </Reveal>
+            <CardGroup id="products" className="ab-grid ab-grid-2">
+              {PRODUCT_CARDS.map((c, i) => (
+                <PalCard key={c.title} group="products" index={i} palette={c.palette} className="ab-card ab-product-card" delay={c.delay}>
+                  <h3>{c.title}</h3>
+                  <p>{c.text}</p>
+                  <ul className="ab-bullet-list">
+                    {c.bullets.map((b) => (
+                      <li key={b}>{b}</li>
+                    ))}
+                  </ul>
+                  <a className="ab-card-btn" href={i === 0 ? tryHref : financesHref}>
+                    {c.btnText}
+                  </a>
+                </PalCard>
+              ))}
+            </CardGroup>
+          </section>
+
+          {/* 6. ask: example questions */}
           <section className="ab-sec" id="ab-ask" aria-labelledby="ab-ask-h">
             <Reveal className="ab-head">
               <span className="ab-tag"><i></i>Ask anything</span>
@@ -121,14 +155,34 @@ export default function AboutPage({ tryHref = '#', homeHref = '#' }) {
             <Reveal as="p" className="ab-cap">Example answers.</Reveal>
           </section>
 
-          {/* 6. promise + CTA */}
+          {/* 7. privacy */}
+          <section className="ab-sec" id="ab-privacy" aria-labelledby="ab-privacy-h">
+            <Reveal className="ab-head">
+              <span className="ab-tag"><i></i>Privacy</span>
+              <h2 id="ab-privacy-h">What happens to your data.</h2>
+              <p>Plain facts, so you can decide what to share.</p>
+            </Reveal>
+            <CardGroup id="privacy" className="ab-grid ab-grid-4">
+              {PRIVACY_CARDS.map((c, i) => (
+                <PalCard key={c.num} group="privacy" index={i} palette={c.palette} className="ab-card ab-priv-card" delay={c.delay}>
+                  <span className="ab-num">{c.num}</span>
+                  <h3>{c.title}</h3>
+                  <p>{c.text}</p>
+                </PalCard>
+              ))}
+            </CardGroup>
+            <Reveal as="p" className="ab-cap">{PRIVACY_CAPTION}</Reveal>
+          </section>
+
+          {/* 8. promise + CTA */}
           <section className="ab-sec ab-end" id="ab-end" aria-labelledby="ab-end-h">
             <Reveal className="ab-head">
               <h2 id="ab-end-h">Built to inform, not to replace your CA.</h2>
               <p>A clear second opinion, so you walk into the next conversation better prepared.</p>
             </Reveal>
             <Reveal className="ab-ctas" delay=".06s">
-              <a className="ab-btn p" href={tryHref}>Try a household</a>
+              <a className="ab-btn p" href={tryHref}>Open Decision Engine</a>
+              <a className="ab-btn p" href={financesHref}>Open My Finances</a>
               <a className="ab-btn g" href={homeHref}>Back to Home</a>
             </Reveal>
           </section>

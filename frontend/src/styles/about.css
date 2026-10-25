@@ -18,6 +18,7 @@
 .ab-head h2{margin:0;font-weight:500;font-size:clamp(2.1rem,5vw,4rem);line-height:1.04;letter-spacing:-.03em;text-wrap:balance;text-shadow:0 2px 28px rgba(0,0,0,.6)}
 .ab-head p{margin:0;max-width:46ch;font-weight:300;font-size:clamp(1rem,1.4vw,1.15rem);line-height:1.6;color:var(--soft);text-shadow:0 1px 18px rgba(0,0,0,.7)}
 .ab-grid{display:grid;gap:14px;margin-top:clamp(2rem,4vw,3.2rem)}
+.ab-grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
 .ab-grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
 .ab-grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}
 .ab-card{position:relative;display:flex;flex-direction:column;min-height:280px;padding:20px;border-radius:22px;border:1px solid var(--border);
@@ -59,6 +60,23 @@
 .ab-how .ab-ico svg{stroke:var(--accent)}
 .ab-how .ab-card h3{margin:0 0 .55rem}
 .ab-how .ab-card:focus-visible{outline:2px solid #fff;outline-offset:3px}
+
+/* ---------- what you can use (products) ---------- */
+.ab-product-card{padding:clamp(1.5rem,3vw,2.2rem);min-height:360px}
+.ab-product-card h3{margin:0 0 .5rem;font-size:clamp(1.2rem,2vw,1.45rem);font-weight:600;letter-spacing:-.015em}
+.ab-product-card p{margin:0;font-size:.92rem;line-height:1.55;color:var(--soft)}
+.ab-bullet-list{list-style:none;padding:0;margin:1.4rem 0 2rem;display:flex;flex-direction:column;gap:10px}
+.ab-bullet-list li{position:relative;padding-left:18px;font-size:.88rem;line-height:1.5;color:var(--soft)}
+.ab-bullet-list li::before{content:'';position:absolute;left:2px;top:.6em;width:5px;height:5px;border-radius:50%;background:var(--accent)}
+.ab-card-btn{margin-top:auto;align-self:flex-start;display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 1.5rem;border-radius:999px;background:var(--tagbg);color:var(--tagtx);font:600 .88rem inherit;letter-spacing:.01em;transition:filter .18s,transform .18s;box-shadow:0 4px 16px rgba(0,0,0,.25)}
+.ab-card-btn:hover{filter:brightness(1.12);transform:translateY(-1px)}
+
+/* ---------- privacy ---------- */
+.ab-priv-card{min-height:220px;padding:clamp(1.3rem,2.4vw,1.75rem)}
+.ab-priv-card h3{margin:1.8rem 0 .5rem;font-size:1.12rem;font-weight:600;letter-spacing:-.01em}
+.ab-priv-card p{margin:0;font-size:.86rem;line-height:1.55;color:var(--soft)}
+.ab-priv-card .ab-num{color:var(--accent)}
+
 /* once revealed, interactions should be quick (transition-delay: 0s) */
 .ab-card.ab-done,
 .ab .pal.ab-done,
@@ -112,12 +130,15 @@
 
 @media (max-width:1100px){.ab-grid-4{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:860px){  .ab-hero{grid-template-columns:1fr;align-items:end;gap:1.3rem}.ab-hero-sub{margin:0}
+  .ab-grid-2{grid-template-columns:1fr}
   .ab-grid-3{grid-template-columns:1fr}.ab-card{min-height:0}
   .ab-two{grid-template-columns:1fr}.ab-plus{justify-self:center}
   .ab-qa{grid-template-columns:1fr}}
 @media (max-width:560px){
   .ab-grid-4{grid-template-columns:1fr}.ab-how .ab-card{min-height:0}.ab-card{padding:18px}
-  .ab-card h3{margin-top:1.6rem}.ab-two .ab-card{min-height:0}}
+  .ab-card h3{margin-top:1.6rem}.ab-two .ab-card{min-height:0}
+  .ab-product-card{min-height:0}.ab-product-card .ab-card-btn{align-self:stretch;text-align:center}
+  .ab-priv-card{min-height:0}}
 @media (prefers-reduced-motion:reduce){.ab *{animation:none!important;transition:none!important}.ab-rv{opacity:1;transform:none}.ab .pal:hover{transform:none!important}}
 
 /* ==========================================================================
