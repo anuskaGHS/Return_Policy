@@ -5,6 +5,7 @@ import AboutPage from './pages/AboutPage';
 import WhatIfPage from './pages/WhatIfPage';
 import ExitPage from './pages/ExitPage';
 import ExplainerPage from './pages/ExplainerPage';
+import FinancesPage from './pages/FinancesPage';
 import { derive } from './lib/whatif/healthScore.js';
 import ErrorBanner from './components/ErrorBanner';
 import { simulatePolicy, checkBackendHealth } from './services/api';
@@ -21,7 +22,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState(() => {
     const hash = window.location.hash.replace('#', '').toLowerCase();
     if (hash === 'exit-advisor' || hash === 'explainer') return 'calculator';
-    if (['home', 'about', 'calculator'].includes(hash)) {
+    if (['home', 'about', 'calculator', 'finances'].includes(hash)) {
       return hash;
     }
     return 'home';
@@ -55,7 +56,7 @@ export default function App() {
       } else if (hash === 'explainer') {
         setActiveTab('calculator');
         setCalculatorSubTab('explainer');
-      } else if (['home', 'about', 'calculator'].includes(hash)) {
+      } else if (['home', 'about', 'calculator', 'finances'].includes(hash)) {
         setActiveTab(hash);
         if (hash === 'calculator') {
           setCalculatorSubTab('simulator');
@@ -212,6 +213,10 @@ export default function App() {
     );
   }
 
+  if (activeTab === 'finances') {
+    return <FinancesPage />;
+  }
+
   return (
     <div className={`app-wrapper ${activeTab === 'home' ? 'app-wrapper-home' : ''}`}>
       <Header
@@ -259,6 +264,8 @@ export default function App() {
           <button className="footer-link" onClick={() => navigateTo('about')}>About Platform</button>
           <span className="footer-dot">•</span>
           <button className="footer-link" onClick={() => navigateTo('calculator', 'simulator')}>Decision Engine</button>
+          <span className="footer-dot">•</span>
+          <button className="footer-link" onClick={() => navigateTo('finances')}>My Finances</button>
           <span className="footer-dot">•</span>
           <button className="footer-link" onClick={() => navigateTo('calculator', 'exitAdvisor')}>Smart Exit Advisor</button>
           <span className="footer-dot">•</span>

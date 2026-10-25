@@ -143,16 +143,16 @@ export const FEATURES = [
     </>),
   },
   {
-    id: 'dashboard', status: 'soon', palette: 'charcoal', kick: 'One dashboard', icon: 'upload',
+    id: 'dashboard', status: 'live', palette: 'charcoal', kick: 'One dashboard', icon: 'upload',
     heading: <h4 className="hs-hd hs-h-heavy" style={{ fontSize: '19px' }}>Everything<br />in one view</h4>,
     text: 'Every product you own.',
     viz: (<>
-      <div className="hs-file"><Icon name="upload" />CAS statement.pdf</div>
+      <div className="hs-file"><Icon name="upload" />SIP statement.pdf</div>
       <div className="hs-chips"><span>SIPs</span><span>Loans</span><span>Insurance</span><span>FDs</span></div>
     </>),
   },
   {
-    id: 'insurance-gap', status: 'soon', palette: 'vermilion', kick: 'Insurance gap', icon: 'shield',
+    id: 'insurance-gap', status: 'live', palette: 'vermilion', kick: 'Insurance gap', icon: 'shield',
     heading: <h4 className="hs-hd hs-h-heavy" style={{ fontSize: '19px' }}>Is your<br />cover<br />enough?</h4>,
     text: 'Checked against 10× your income.',
     viz: (<>

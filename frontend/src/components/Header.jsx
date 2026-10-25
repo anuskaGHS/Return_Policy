@@ -82,6 +82,17 @@ export default function Header({
             {currentTab === 'calculator' && <span className="site-nav-bullet" aria-hidden="true">·</span>}
             <span>Decision Engine</span>
           </button>
+
+          <button
+            type="button"
+            id="nav-finances"
+            className={`site-nav-link ${currentTab === 'finances' ? 'active' : ''}`}
+            onClick={() => handleNavClick('finances')}
+            aria-current={currentTab === 'finances' ? 'page' : undefined}
+          >
+            {currentTab === 'finances' && <span className="site-nav-bullet" aria-hidden="true">·</span>}
+            <span>My Finances</span>
+          </button>
         </nav>
 
         {/* Right Actions: Language Toggle + CTA Pill Button */}
@@ -185,6 +196,13 @@ export default function Header({
             onClick={() => handleNavClick('calculator', 'simulator')}
           >
             Decision Engine
+          </button>
+          <button
+            type="button"
+            className={`site-mobile-link ${currentTab === 'finances' ? 'active' : ''}`}
+            onClick={() => handleNavClick('finances')}
+          >
+            My Finances
           </button>
 
           {currentTab === 'home' && (

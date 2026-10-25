@@ -9,6 +9,7 @@ const HI = {
   'Home': 'होम',
   'About Platform': 'प्लेटफ़ॉर्म के बारे में',
   'Decision Engine': 'डिसीज़न इंजन',
+  'My Finances': 'मेरी वित्तीय स्थिति',
   'Primary': 'मुख्य मेनू',
   'Language': 'भाषा',
   '© 2026 Return Policy — AI-Powered Household Finance Decision Engine.': '© 2026 Return Policy — AI-संचालित घरेलू वित्त निर्णय इंजन।',

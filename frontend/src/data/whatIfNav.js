@@ -4,6 +4,7 @@ export const NAV_LINKS = [
   { label: 'Home', href: '#home' },
   { label: 'About Platform', href: '#about' },
   { label: 'Decision Engine', href: '#calculator', current: true },
+  { label: 'My Finances', href: '#finances' },
 ];
 
 export const FOOTER_LINES = [
