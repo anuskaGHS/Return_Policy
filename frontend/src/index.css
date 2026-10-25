@@ -759,10 +759,6 @@ input[type="range"]::-webkit-slider-thumb:hover {
   display: none;
 }
 
-.app-wrapper-home .footer-links-row button:nth-of-type(4) {
-  display: none;
-}
-
 .app-wrapper-home .footer-copyright {
   display: none;
 }

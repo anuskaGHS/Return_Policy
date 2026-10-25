@@ -288,10 +288,6 @@ export default function App() {
           <button className="footer-link" onClick={() => navigateTo('calculator', 'simulator')}>Decision Engine</button>
           <span className="footer-dot">•</span>
           <button className="footer-link" onClick={() => navigateTo('finances')}>My Finances</button>
-          <span className="footer-dot">•</span>
-          <button className="footer-link" onClick={() => navigateTo('calculator', 'exitAdvisor')}>Smart Exit Advisor</button>
-          <span className="footer-dot">•</span>
-          <button className="footer-link" onClick={() => navigateTo('calculator', 'explainer')}>Return Explainer</button>
         </div>
         <p className="footer-copyright">© 2026 Return Policy — AI-Powered Household Finance Decision Engine.</p>
         <p className="footer-disclaimer">

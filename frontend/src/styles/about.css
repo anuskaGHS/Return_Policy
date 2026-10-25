@@ -192,10 +192,6 @@ body.ab-route .footer-dot {
   display: none !important;
 }
 
-body.ab-route .footer-links-row button:nth-of-type(4) {
-  display: none !important;
-}
-
 body.ab-route .footer-copyright {
   display: none !important;
 }
