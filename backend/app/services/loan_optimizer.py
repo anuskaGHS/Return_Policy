@@ -358,16 +358,16 @@ def calculate_loan_vs_invest(
         recommendation = "Invest"
 
     notes = [
-        "Home loan tax benefits left out: tax deductions on home loan interest (Section 24(b), up to ₹2,00,000 a year) are not counted. They could change the result.",
-        "Tax on gains: the investment is assumed to be sold in one go at the end, with 12.5% tax on gains above ₹1,25,000 (Section 112A). Check the current rates before you decide.",
+        "Home loan tax benefits left out: tax deductions on home loan interest (up to ₹2,00,000 a year) are not counted. They could change the result.",
+        "Tax on gains: the investment is assumed to be sold in one go at the end, with 12.5% tax on gains above ₹1,25,000. Check the current rates before you decide.",
         "Monthly investing: each month’s money is invested at the start of the month and grows at your expected return divided by 12.",
         "Same monthly spend: both options use the same total every month (EMI plus your extra money). Under Prepay, the leftover in the month the loan closes, and the full amount after that, goes into investing.",
         "Break-even return: the yearly return at which both options end with the same money. It is found by repeated trial, not by a formula.",
         "Fixed rates: the loan rate and the investment return stay the same for the whole period. Real loans can change rate and markets go up and down."
     ]
     notes_hi = [
-        "होम लोन के टैक्स लाभ शामिल नहीं: होम लोन के ब्याज पर टैक्स कटौती (धारा 24(b), साल में ₹2,00,000 तक) नहीं गिनी गई है। इससे नतीजा बदल सकता है।",
-        "मुनाफ़े पर टैक्स: मान लिया गया है कि निवेश अंत में एक बार में बेचा जाएगा और ₹1,25,000 से ऊपर के मुनाफ़े पर 12.5% टैक्स लगेगा (धारा 112A)। फ़ैसले से पहले मौजूदा दरें जाँच लें।",
+        "होम लोन के टैक्स लाभ शामिल नहीं: होम लोन के ब्याज पर टैक्स कटौती (साल में ₹2,00,000 तक) नहीं गिनी गई है। इससे नतीजा बदल सकता है।",
+        "मुनाफ़े पर टैक्स: मान लिया गया है कि निवेश अंत में एक बार में बेचा जाएगा और ₹1,25,000 से ऊपर के मुनाफ़े पर 12.5% टैक्स लगेगा। फ़ैसले से पहले मौजूदा दरें जाँच लें।",
         "हर महीने निवेश: हर महीने की रकम महीने की शुरुआत में निवेश होती है और आपके अपेक्षित सालाना रिटर्न को 12 से भाग देकर हर महीने बढ़ती है।",
         "हर महीने उतना ही खर्च: दोनों विकल्पों में हर महीने कुल रकम बराबर है (EMI और आपकी अतिरिक्त रकम)। लोन जल्दी चुकाने में, लोन बंद होने के महीने की बची रकम और उसके बाद पूरी रकम निवेश में जाती है।",
         "ब्रेक-ईवन रिटर्न: वह सालाना रिटर्न जिस पर दोनों विकल्पों में अंत में बराबर रकम बचती है। इसे बार-बार आज़माकर निकाला गया है, किसी सीधे सूत्र से नहीं।",
