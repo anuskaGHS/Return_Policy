@@ -3,14 +3,16 @@ import { mockChat, mockDashboard, mockExtract } from '../lib/finances/mock.js';
 const API_URL = import.meta.env?.VITE_API_URL || 'http://localhost:8000/api';
 const MOCK = import.meta.env?.VITE_FINANCES_MOCK === '1';
 
-async function request(path, options = {}) {
+async function request(path, options = {}, language = 'en') {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 30000);
   try {
     const response = await fetch(`${API_URL}/finances${path}`, { ...options, signal: controller.signal });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      const detail = Array.isArray(data.detail) ? 'Please check the numbers and try again' : data.detail;
+      const detail = Array.isArray(data.detail)
+        ? language === 'hi' ? 'कृपया आँकड़े जाँचकर फिर कोशिश करें।' : 'Please check the numbers and try again'
+        : data.detail;
       throw new Error(detail || 'Something went wrong. Please try again.');
     }
     return data;
@@ -22,7 +24,7 @@ export function extractDocuments(files, language = 'en') {
   const form = new FormData();
   files.forEach((file) => form.append('files', file));
   form.append('language', language);
-  return request('/extract', { method: 'POST', body: form });
+  return request('/extract', { method: 'POST', body: form }, language);
 }
 
 function removeEmptyFields(value) {
@@ -53,12 +55,12 @@ function toChatHistory(history = []) {
 export function getDashboard(payload) {
   if (MOCK) return mockDashboard(payload);
   const dashboard = toDashboardPayload(payload);
-  return request('/dashboard', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dashboard) });
+  return request('/dashboard', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dashboard) }, dashboard.language);
 }
 
 export function askChat(payload) {
   if (MOCK) return mockChat(payload);
   const dashboard = toDashboardPayload(payload);
-  return request('/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: payload.question, history: toChatHistory(payload.history), language: dashboard.language, dashboard }) });
+  return request('/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: payload.question, history: toChatHistory(payload.history), language: dashboard.language, dashboard }) }, dashboard.language);
 }
 export const isFinancesMock = MOCK;
