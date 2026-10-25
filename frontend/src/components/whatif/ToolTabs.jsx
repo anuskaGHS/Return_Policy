@@ -1,13 +1,17 @@
-import { useT } from '../../hooks/useLang.js';
+import { useLang, useT } from '../../hooks/useLang.js';
 
-// The two Decision Engine tools. `active` is 'whatif' or 'smartexit'; `onSelect` is optional.
+// The Decision Engine tools. `active` is 'whatif', 'smartexit' or 'explainer'; `onSelect` is optional.
+// A tab marked `soon` is shown but cannot be opened yet.
 const TABS = [
   { id: 'whatif', label: 'What-If Policy Simulator' },
   { id: 'smartexit', label: 'Smart Exit & Hold Tax Advisor' },
+  { id: 'explainer', label: 'Return Explainer', hi: 'रिटर्न एक्सप्लेनर' },
+  { id: 'loan', label: 'Loan vs Investment', hi: 'लोन बनाम निवेश', soon: true },
 ];
 
 export default function ToolTabs({ active = 'whatif', onSelect }) {
   const t = useT();
+  const lang = useLang();
   return (
     <div className="wi-tabs" role="tablist" aria-label={t('Decision Engine tools')}>
       {TABS.map((tab) => (
@@ -17,9 +21,12 @@ export default function ToolTabs({ active = 'whatif', onSelect }) {
           role="tab"
           type="button"
           aria-selected={active === tab.id}
-          onClick={() => onSelect && onSelect(tab.id)}
+          disabled={tab.soon}
+          style={tab.soon ? { opacity: 0.55, cursor: 'not-allowed' } : undefined}
+          onClick={() => !tab.soon && onSelect && onSelect(tab.id)}
         >
-          {t(tab.label)}
+          {lang === 'hi' && tab.hi ? tab.hi : t(tab.label)}
+          {tab.soon && <small style={{ marginLeft: '.5rem', fontSize: '.7rem', opacity: 0.8 }}>{lang === 'hi' ? 'जल्द' : 'Soon'}</small>}
         </button>
       ))}
     </div>

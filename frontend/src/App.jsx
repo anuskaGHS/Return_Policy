@@ -4,6 +4,7 @@ import HomePage from './pages/HomePage';
 import AboutPage from './pages/AboutPage';
 import WhatIfPage from './pages/WhatIfPage';
 import ExitPage from './pages/ExitPage';
+import ExplainerPage from './pages/ExplainerPage';
 import { derive } from './lib/whatif/healthScore.js';
 import ErrorBanner from './components/ErrorBanner';
 import { simulatePolicy, checkBackendHealth } from './services/api';
@@ -19,17 +20,18 @@ export default function App() {
   // Navigation tab: 'home' | 'about' | 'calculator'
   const [activeTab, setActiveTab] = useState(() => {
     const hash = window.location.hash.replace('#', '').toLowerCase();
-    if (hash === 'exit-advisor') return 'calculator';
+    if (hash === 'exit-advisor' || hash === 'explainer') return 'calculator';
     if (['home', 'about', 'calculator'].includes(hash)) {
       return hash;
     }
     return 'home';
   });
 
-  // Decision Engine sub-tab: 'simulator' | 'exitAdvisor'
+  // Decision Engine sub-tab: 'simulator' | 'exitAdvisor' | 'explainer'
   const [calculatorSubTab, setCalculatorSubTab] = useState(() => {
     const hash = window.location.hash.replace('#', '').toLowerCase();
     if (hash === 'exit-advisor') return 'exitAdvisor';
+    if (hash === 'explainer') return 'explainer';
     return 'simulator';
   });
 
@@ -50,6 +52,9 @@ export default function App() {
       if (hash === 'exit-advisor') {
         setActiveTab('calculator');
         setCalculatorSubTab('exitAdvisor');
+      } else if (hash === 'explainer') {
+        setActiveTab('calculator');
+        setCalculatorSubTab('explainer');
       } else if (['home', 'about', 'calculator'].includes(hash)) {
         setActiveTab(hash);
         if (hash === 'calculator') {
@@ -66,7 +71,7 @@ export default function App() {
     setActiveTab(tab);
     if (tab === 'calculator') {
       setCalculatorSubTab(subTab);
-      window.location.hash = subTab === 'exitAdvisor' ? '#exit-advisor' : '#calculator';
+      window.location.hash = subTab === 'exitAdvisor' ? '#exit-advisor' : subTab === 'explainer' ? '#explainer' : '#calculator';
     } else {
       window.location.hash = `#${tab}`;
     }
@@ -173,7 +178,10 @@ export default function App() {
         onLangChange={setLanguage}
         onInputsChange={setWhatIfInputs}
         activeTool="whatif"
-        onToolChange={(id) => { if (id === 'smartexit') navigateTo('calculator', 'exitAdvisor'); }}
+        onToolChange={(id) => {
+          if (id === 'smartexit') navigateTo('calculator', 'exitAdvisor');
+          if (id === 'explainer') navigateTo('calculator', 'explainer');
+        }}
       />
     );
   }
@@ -183,7 +191,23 @@ export default function App() {
       <ExitPage
         lang={language}
         onLangChange={setLanguage}
-        onToolChange={(id) => { if (id === 'whatif') navigateTo('calculator', 'simulator'); }}
+        onToolChange={(id) => {
+          if (id === 'whatif') navigateTo('calculator', 'simulator');
+          if (id === 'explainer') navigateTo('calculator', 'explainer');
+        }}
+      />
+    );
+  }
+
+  if (activeTab === 'calculator' && calculatorSubTab === 'explainer') {
+    return (
+      <ExplainerPage
+        lang={language}
+        onLangChange={setLanguage}
+        onToolChange={(id) => {
+          if (id === 'whatif') navigateTo('calculator', 'simulator');
+          if (id === 'smartexit') navigateTo('calculator', 'exitAdvisor');
+        }}
       />
     );
   }
@@ -237,6 +261,8 @@ export default function App() {
           <button className="footer-link" onClick={() => navigateTo('calculator', 'simulator')}>Decision Engine</button>
           <span className="footer-dot">•</span>
           <button className="footer-link" onClick={() => navigateTo('calculator', 'exitAdvisor')}>Smart Exit Advisor</button>
+          <span className="footer-dot">•</span>
+          <button className="footer-link" onClick={() => navigateTo('calculator', 'explainer')}>Return Explainer</button>
         </div>
         <p className="footer-copyright">© 2026 Return Policy — AI-Powered Household Finance Decision Engine.</p>
         <p className="footer-disclaimer">

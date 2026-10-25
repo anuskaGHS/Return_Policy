@@ -133,12 +133,13 @@ export const FEATURES = [
     </>),
   },
   {
-    id: 'why-it-moved', status: 'soon', palette: 'ice', kick: 'Why it moved', icon: 'chat',
-    heading: <h4 className="hs-hd hs-h-serif">Why did it<br />fall?</h4>,
-    text: 'Ask why, get a plain answer.',
+    id: 'why-it-moved', status: 'live', palette: 'ice', kick: 'Return explainer', icon: 'chat',
+    heading: <h4 className="hs-hd hs-h-serif">Why did my<br />fund lag?</h4>,
+    text: 'A fund vs its benchmark, the sectors behind the gap, and sources.',
     viz: (<>
-      <div className="hs-q">Why did my SIP return only 6%?</div>
-      <div className="hs-a">Your fund is heavy in IT stocks, which fell after a US rate hike.</div>
+      <div className="hs-bar"><span>Kotak Large Cap Fund</span><b>−5.4%</b></div><div className="hs-bb" style={{ background: 'var(--risk)', width: '100%' }} />
+      <div className="hs-bar"><span>Nifty 100 TRI</span><b>−5.2%</b></div><div className="hs-bb" style={{ background: 'var(--muted)', width: '96%' }} />
+      <div className="hs-sm">1-year return as on 30 Sep 2026.</div>
     </>),
   },
   {
