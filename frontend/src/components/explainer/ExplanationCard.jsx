@@ -7,7 +7,7 @@ export default function ExplanationCard({ explanation, busy }) {
   const text = explanation ? (hi ? explanation.hi : explanation.en) : '';
   const byAi = explanation && explanation.source === 'ai';
   return (
-    <section className="rx-panel rx-ai" aria-labelledby="rx-exp" aria-busy={busy}>
+    <section id="rx-plain" className="rx-panel rx-ai" aria-labelledby="rx-exp" aria-busy={busy}>
       <div className="rx-aitop">
         <h2 className="rx-aihd" id="rx-exp">{L('In plain words', 'आसान शब्दों में')}</h2>
         <span className="rx-aichip">{byAi ? 'AI' : L('Summary', 'सार')}</span>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import WhatIfHeader from '../components/whatif/WhatIfHeader.jsx';
 import WhatIfFooter from '../components/whatif/WhatIfFooter.jsx';
 import ToolTabs from '../components/whatif/ToolTabs.jsx';
@@ -71,6 +71,17 @@ function ErrorBox({ kind, onRetry }) {
 function Body({ x, onToolChange }) {
   const { L } = useExplainerText();
   const { data, status, busy, slow, error } = x;
+
+  useEffect(() => {
+    if (!busy && x.wantScroll.current) {
+      // oxlint-disable-next-line react/immutability
+      x.wantScroll.current = false;
+      if (!error) {
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        document.getElementById('rx-plain')?.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+      }
+    }
+  }, [busy, error, x.wantScroll]);
   return (
     <main className="wi-main rx-main">
       <ToolTabs active="explainer" onSelect={onToolChange} />

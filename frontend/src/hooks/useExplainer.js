@@ -18,6 +18,7 @@ export default function useExplainer(language) {
   const hasData = useRef(false);
   const slowTimer = useRef(null);
   const langRef = useRef(language);
+  const wantScroll = useRef(false);
   useEffect(() => {
     langRef.current = language;
   }, [language]);
@@ -92,9 +93,12 @@ export default function useExplainer(language) {
   };
 
   const explain = () => {
-    if (fundId && !busy) run(fundId, period);
+    if (fundId && !busy) {
+      wantScroll.current = true;
+      run(fundId, period);
+    }
   };
 
   const fund = funds.find((f) => f.id === fundId) || null;
-  return { funds, fund, fundId, period, status, busy, slow, data, error, setPeriod, selectFund, explain, retry: load };
+  return { funds, fund, fundId, period, status, busy, slow, data, error, setPeriod, selectFund, explain, retry: load, wantScroll };
 }
