@@ -161,11 +161,18 @@ def _add_indian_formatted_amounts(value):
         result = {}
         for key, item in value.items():
             result[key] = _add_indian_formatted_amounts(item)
+            if key == "health":
+                # Health points are scores, not rupee amounts.
+                result[key] = item
+                continue
+            if key == "absolute_return_pct" and isinstance(item, (int, float)):
+                result["absolute_return_pct_text"] = f"{item:.2f}%"
             if (
                 isinstance(item, (int, float))
                 and not isinstance(item, bool)
                 and key != "suggested_cover_income_multiplier"
                 and ("amount" in key or "income" in key or "cover" in key
+                    or "assured" in key or key == "gap"
                     or "principal" in key or "salary" in key
                     or "premium" in key or "value" in key
                     or "emi" in key or "sip" in key)

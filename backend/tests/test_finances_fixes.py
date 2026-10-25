@@ -118,9 +118,26 @@ def test_unrelated_hindi_question_is_out_of_scope(monkeypatch):
 def test_ai_gets_ready_made_indian_amounts_and_the_fixed_rules():
     request = ChatRequest(question="Is my cover enough?", dashboard=_dashboard())
     figures = finances_chat._dashboard_figures(request, _dashboard())
-    assert figures["amounts_in_rupees"]["maturity_amount"] == "₹5,35,500"
-    assert figures["amounts_in_rupees"]["cover_gap"] == "₹20,00,000"
-    assert figures["rules"]["suggested_cover_is_times_annual_income"] == 10
+    assert figures["cards"]["fd"]["maturity_amount_formatted"] == "₹5,35,500"
+    assert figures["cover_gap_formatted"] == "₹20,00,000"
+    assert figures["cards"]["insurance"]["sum_assured_formatted"] == "₹1,00,00,000"
+    assert figures["calculation_constants"]["suggested_cover_income_multiplier"] == 10
+
+
+def test_health_points_are_not_shown_as_rupees():
+    request = ChatRequest(question="How is my score?", dashboard=_dashboard())
+    figures = finances_chat._dashboard_figures(request, _dashboard())
+    assert "sip_formatted" not in figures["health"]["points"]
+
+
+def test_sip_return_comes_with_a_rounded_text_version():
+    dashboard = DashboardRequest.model_validate({
+        "income": {"monthly_gross_salary": 100000},
+        "sip": {"monthly_sip_amount": 8000, "invested_amount": 96000, "current_value": 101250},
+    })
+    request = ChatRequest(question="How is my SIP doing?", dashboard=dashboard)
+    figures = finances_chat._dashboard_figures(request, dashboard)
+    assert figures["cards"]["sip"]["absolute_return_pct_text"] == "5.47%"
 
 
 def test_amount_in_indian_format_is_accepted(monkeypatch):
@@ -153,5 +170,5 @@ def test_number_check_rejection_is_logged_without_the_answer(monkeypatch, caplog
     with caplog.at_level(logging.WARNING):
         result = finances_chat.answer_finances_chat(request, _dashboard())
     assert result["ai_source"] == "fallback"
-    assert "number check" in caplog.text
+    assert "number guard" in caplog.text
     assert "7,77,777" not in caplog.text
