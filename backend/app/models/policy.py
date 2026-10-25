@@ -254,5 +254,8 @@ class LoanOptimizerResponse(BaseModel):
     break_even_cagr: float = Field(..., description="Break-even equity CAGR % where both strategies yield equal net terminal wealth")
     break_even_cagr_pct: Optional[float] = Field(default=None, description="Alias for break_even_cagr")
     notes: List[str] = Field(default_factory=list, description="Simplifications and statutory rules applied")
+    notes_hi: List[str] = Field(default_factory=list, description="Hindi explanations of the same six assumptions")
+    key_points: List[str] = Field(default_factory=list, description="Plain-language comparison highlights in English")
+    key_points_hi: List[str] = Field(default_factory=list, description="Hindi translations of the comparison highlights")
 
 
