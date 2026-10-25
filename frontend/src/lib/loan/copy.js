@@ -19,7 +19,7 @@ const en = {
   loading: 'Comparing…', slow: 'The server is waking up. The first request can take up to a minute.', invalid: 'Please check the numbers and try again.', failed: 'Something went wrong while comparing. Please try again.', offline: 'We could not reach the server. It may be waking up or your connection may be down.', retry: 'Try again', errTitle: 'Could not compare',
   errPrincipal: 'Enter an amount above 0.', errRate: 'Enter a rate from 0 to 100.', errMonths: 'Enter whole months from 1 to 480.', errSurplus: 'Enter an amount above 0. With no extra money, both options are the same.', errReturn: 'Enter a return from 0 to 100.',
   noFinances: 'No loan numbers found. Add your documents in My Finances first.', filledFinances: 'Filled from My Finances. Check the numbers, then press Compare.', stale: 'You changed the numbers. Press Compare to update the result.',
-  loanMarkT: 'Loan rate {rate}%', beMarkT: 'Break-even {be}%', youMarkT: 'Your assumption {cagr}%', scaleAriaT: 'Scale from {lo}% to {hi}% a year', yearOne: 'year', yearMany: 'years', monthOne: 'month', monthMany: 'months', closesRow: '{duration} (month {n})',
+  loanMarkT: 'Loan rate {rate}', beMarkT: 'Break-even {be}', youMarkT: 'Your assumption {cagr}', scaleAriaT: 'Scale from {lo}% to {hi}% a year', yearOne: 'year', yearMany: 'years', monthOne: 'month', monthMany: 'months', closesRow: '{duration} (month {n})',
 };
 
 const hi = { ...en,

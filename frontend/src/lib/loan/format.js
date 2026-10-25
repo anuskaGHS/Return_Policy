@@ -16,7 +16,7 @@ export function rupees(value) {
 
 export function percent(value, digits = 2) {
   const number = Number(value);
-  return Number.isFinite(number) ? `${number.toFixed(digits)}%` : '—';
+  return Number.isFinite(number) ? `${number.toFixed(digits).replace(/\.0+$|(?<=\.\d)0+$/, '')}%` : '—';
 }
 
 export function duration(months, t) {
