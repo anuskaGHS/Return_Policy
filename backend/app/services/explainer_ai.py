@@ -217,6 +217,7 @@ def generate_explainer_text(
             model=settings.GROQ_MODEL,
             response_format={"type": "json_object"},
             temperature=0.2,
+            max_completion_tokens=4000,
             reasoning_effort="low",
         )
 

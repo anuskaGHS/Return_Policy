@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "documents": [
+    {
+      "id": "it-ai-fears-feb-2026",
+      "title": "Nifty IT index loses 3,000 pts in last five sessions; should you 'sell on rise'?",
+      "publisher": "Business Today",
+      "url": "https://www.businesstoday.in/amp/markets/stocks/story/nifty-it-index-loses-3000-pts-in-last-five-sessions-should-you-sell-on-rise-517848-2026-02-25",
+      "published_on": "2026-02-25",
+      "kind": "market",
+      "source_type": "news",
+      "sectors": [
+        "Information Technology"
+      ],
+      "summary": "Report from 25 Feb 2026: the Nifty IT index fell over 3,000 points (about 9%) in five sessions and was down about 21% for 2026 so far. The article links the fall to fears that AI tools could cut demand for IT services, broker downgrades of six Indian IT stocks, and tariff worries.",
+      "extract": null,
+      "accessed_on": "2026-10-25",
+      "event_start": null,
+      "event_end": null
+    },
+    {
+      "id": "steel-safeguard-duty-2025",
+      "title": "India Imposes Safeguard Duty For 3 Years on Certain Steel Products",
+      "publisher": "Outlook Business (PTI)",
+      "url": "https://www.outlookbusiness.com/economy-and-policy/india-imposes-safeguard-duty-for-3-years-on-certain-steel-products",
+      "published_on": "2025-12-31",
+      "event_start": "2025-04-21",
+      "event_end": "2028-04-20",
+      "kind": "policy",
+      "source_type": "news",
+      "sectors": [
+        "Metals & Mining"
+      ],
+      "summary": "Report of 31 Dec 2025: India set a three-year safeguard duty on certain steel flat products to shield domestic producers from a sharp rise in low-priced imports. The duty is 12% in year one (from 21 Apr 2025), 11.5% in year two and 11% in year three.",
+      "extract": null,
+      "accessed_on": "2026-10-25"
+    },
+    {
+      "id": "metal-stocks-rally-may-2026",
+      "title": "Nifty Metal Jumps Over 3%; SAIL, Hindustan Copper Lead - Here's What Happened",
+      "publisher": "Outlook Money",
+      "url": "https://www.outlookmoney.com/invest/nifty-metal-jumps-over-3-sail-hindustan-copper-lead-heres-what-happened",
+      "published_on": "2026-05-13",
+      "kind": "market",
+      "source_type": "news",
+      "sectors": [
+        "Metals & Mining"
+      ],
+      "summary": "Report from 13 May 2026: the Nifty Metal index rose by up to about 3.2% in a day, with SAIL, Hindustan Copper, Vedanta and NMDC leading. The article points to a higher import duty on gold and silver, a steel safeguard duty, and record copper prices on tight global supply.",
+      "extract": null,
+      "accessed_on": "2026-10-25",
+      "event_start": null,
+      "event_end": null
+    },
+    {
+      "id": "gst-56th-council-2025",
+      "title": "Recommendations of the 56th Meeting of the GST Council",
+      "publisher": "Press Information Bureau, Government of India",
+      "url": "https://www.pib.gov.in/PressReleasePage.aspx?PRID=2163555&reg=48&lang=2",
+      "published_on": "2025-09-03",
+      "event_start": "2025-09-22",
+      "event_end": "2026-09-30",
+      "kind": "policy",
+      "source_type": "official",
+      "sectors": [
+        "Automobile and Auto Components",
+        "FMCG"
+      ],
+      "summary": "Official release of 3 Sep 2025. GST moves to two main rates (5% and 18%) from 22 Sep 2025. Small cars and motorcycles up to 350 cc fall from 28% to 18%; many packaged foods, shampoo, toothpaste and soap move to 5%; TVs and air-conditioners fall to 18%.",
+      "extract": null,
+      "accessed_on": "2026-10-25"
+    },
+    {
+      "id": "rbi-repo-cut-dec-2025",
+      "title": "Monetary and Credit Information Review, December 2025",
+      "publisher": "Reserve Bank of India",
+      "url": "https://www.rbi.org.in/Scripts/PublicationsView.aspx?id=23684",
+      "published_on": "2025-12-31",
+      "kind": "policy",
+      "source_type": "official",
+      "sectors": [
+        "Financial Services",
+        "Realty"
+      ],
+      "summary": "RBI publication of Dec 2025. It records that the Monetary Policy Committee unanimously cut the repo rate by 25 basis points to 5.25% in December 2025 and kept a neutral stance. CPI inflation for 2025-26 was projected at 2.0%.",
+      "extract": null,
+      "accessed_on": "2026-10-25",
+      "event_start": null,
+      "event_end": null
+    },
+    {
+      "id": "india-us-trade-deal-feb-2026",
+      "title": "Sensex settles 2,073 pts higher; Nifty ends above 25,700 level",
+      "publisher": "Arihant Capital Markets",
+      "url": "https://www.arihantcapital.com/News/News-Details/1670889/investor-attention",
+      "published_on": "2026-02-03",
+      "kind": "global",
+      "source_type": "news",
+      "sectors": [
+        "ALL"
+      ],
+      "summary": "Market report of 3 Feb 2026: Sensex and Nifty 50 closed about 2.5% higher after an India-US trade deal was announced. The US would lower tariffs on Indian goods to 18% and drop the extra 25% penalty linked to India's Russian crude purchases. Realty, financial services and consumer durables stocks led.",
+      "extract": null,
+      "accessed_on": "2026-10-25",
+      "event_start": null,
+      "event_end": null
+    }
+  ]
+}
