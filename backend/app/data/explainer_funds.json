@@ -1,0 +1,127 @@
+{
+  "schema_version": 1,
+  "as_of": "2026-09-30",
+  "return_basis": {
+    "6M": "absolute",
+    "1Y": "absolute",
+    "3Y": "annualised"
+  },
+  "sector_taxonomy": [
+    "Financial Services",
+    "Automobile and Auto Components",
+    "Information Technology",
+    "FMCG",
+    "Metals & Mining",
+    "Realty",
+    "Other sectors (estimated)"
+  ],
+  "sector_returns": {
+    "6M": {},
+    "1Y": {
+      "Financial Services": -4.42,
+      "Automobile and Auto Components": 0.12,
+      "Information Technology": -15.92,
+      "FMCG": -17.89,
+      "Metals & Mining": 28.45,
+      "Realty": -1.88,
+      "Other sectors (estimated)": -7.67
+    },
+    "3Y": {},
+    "index_used": {
+      "Financial Services": "Nifty Financial Services (Total Return)",
+      "Automobile and Auto Components": "Nifty Auto (Total Return)",
+      "Information Technology": "Nifty IT (Total Return)",
+      "FMCG": "Nifty FMCG (Total Return)",
+      "Metals & Mining": "Nifty Metal (Total Return)",
+      "Realty": "Nifty Realty (Total Return)",
+      "Other sectors (estimated)": "Estimated: backed out of the Nifty 100 TRI 1-year return after removing the six sectors above"
+    },
+    "sources": [
+      {
+        "label": "NSE Nifty Financial Services factsheet (as on 30 Sep 2026)",
+        "url": "https://nsearchives.nseindia.com/content/indices/ind_Nifty_Financial_Services.pdf",
+        "accessed_on": "2026-10-25"
+      },
+      {
+        "label": "NSE Nifty Auto factsheet (as on 30 Sep 2026)",
+        "url": "https://nsearchives.nseindia.com/content/indices/ind_nifty_auto.pdf",
+        "accessed_on": "2026-10-25"
+      },
+      {
+        "label": "NSE Nifty IT factsheet (as on 30 Sep 2026)",
+        "url": "https://nsearchives.nseindia.com/content/indices/ind_nifty_it.pdf",
+        "accessed_on": "2026-10-25"
+      },
+      {
+        "label": "NSE Nifty FMCG factsheet (as on 30 Sep 2026)",
+        "url": "https://www.niftyindices.com/Factsheet/ind_nifty_fmcg.pdf",
+        "accessed_on": "2026-10-25"
+      },
+      {
+        "label": "NSE Nifty Metal factsheet (as on 30 Sep 2026)",
+        "url": "https://nsearchives.nseindia.com/content/indices/ind_nifty_metal.pdf",
+        "accessed_on": "2026-10-25"
+      },
+      {
+        "label": "NSE Nifty Realty factsheet (as on 30 Sep 2026)",
+        "url": "https://nsearchives.nseindia.com/content/indices/ind_nifty_realty.pdf",
+        "accessed_on": "2026-10-25"
+      }
+    ]
+  },
+  "benchmarks": {
+    "nifty-100-tri": {
+      "name": "Nifty 100 TRI",
+      "weights": {
+        "Financial Services": 33.7,
+        "Automobile and Auto Components": 7.24,
+        "Information Technology": 6.72,
+        "FMCG": 5.62,
+        "Metals & Mining": 5.37,
+        "Realty": 0.33,
+        "Other sectors (estimated)": 41.02
+      },
+      "weights_as_of": "2026-09-30",
+      "returns": {
+        "1Y": -5.18
+      },
+      "sources": [
+        {
+          "label": "NSE Nifty 100 factsheet (as on 30 Sep 2026)",
+          "url": "https://nsearchives.nseindia.com/content/indices/ind_nifty_100.pdf",
+          "accessed_on": "2026-10-24"
+        }
+      ]
+    }
+  },
+  "funds": [
+    {
+      "id": "kotak-large-cap-reg-g",
+      "name": "Kotak Large Cap Fund",
+      "category": "Large Cap",
+      "plan": "Regular Growth",
+      "benchmark_id": "nifty-100-tri",
+      "weights": {
+        "Financial Services": 30.44,
+        "Automobile and Auto Components": 9.0,
+        "Information Technology": 4.75,
+        "FMCG": 5.16,
+        "Metals & Mining": 4.34,
+        "Realty": 0.31,
+        "Other sectors (estimated)": 46.0
+      },
+      "portfolio_as_of": "2026-09-30",
+      "returns": {
+        "1Y": -5.44
+      },
+      "sources": [
+        {
+          "label": "Kotak Mutual Fund - Kotak Large Cap Fund page: returns as on 30/09/2026 and holdings as on 30 Sep 2026",
+          "url": "https://www.kotakmf.com/mutual-funds/equity-funds/kotak-bluechip-fund/reg-g",
+          "accessed_on": "2026-10-25"
+        }
+      ],
+      "notes": "Sector weights are the 60 listed equity holdings (94.14%) grouped into NSE sectors, plus 5.86% cash and other assets placed in 'Other sectors (estimated)'. Index futures (about 1.5% notional) are not counted. Adani Enterprises (0.95%) is placed in Metals & Mining. Holdings are as on 30 Sep 2026 and are used as an approximation for the full 1-year period."
+    }
+  ]
+}

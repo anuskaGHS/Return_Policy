@@ -13,7 +13,15 @@ DEFAULT_DATA_PATH = Path(__file__).resolve().parents[1] / "data" / "explainer_fu
 EXPECTED_RETURN_BASIS = {"6M": "absolute", "1Y": "absolute", "3Y": "annualised"}
 
 
+def available_periods(data: ExplainerData) -> list[str]:
+    return [p for p in PERIODS if len(data.sector_returns[p]) > 0]
+
+
 def validate_explainer_data(data: ExplainerData) -> None:
+    avail = available_periods(data)
+    if not avail:
+        raise ValueError("At least one period must be available.")
+
     # 1. ISO date validation and portfolio_as_of / weights_as_of not later than as_of
     try:
         as_of_dt = date.fromisoformat(data.as_of)
@@ -105,7 +113,7 @@ def validate_explainer_data(data: ExplainerData) -> None:
         if abs(fund_sum - 100.0) > WEIGHT_TOLERANCE_PTS + 1e-9:
             raise ValueError(f"Weights for fund '{fund.id}' must add up to about 100% (got {fund_sum}%).")
 
-    # 5. Every sector with non-zero weight in any fund or benchmark must have a sector return for all 3 periods, and an entry in index_used
+    # 5. Every sector with non-zero weight in any fund or benchmark must have a sector return for all available periods, and an entry in index_used
     active_sectors = set()
     for bm in data.benchmarks.values():
         for s, w in bm.weights.items():
@@ -117,7 +125,7 @@ def validate_explainer_data(data: ExplainerData) -> None:
                 active_sectors.add(s)
 
     for s in sorted(active_sectors):
-        for p in PERIODS:
+        for p in avail:
             if s not in data.sector_returns[p]:
                 raise ValueError(f"Active sector '{s}' is missing a sector return for period '{p}'.")
         if s not in data.sector_returns.index_used:
@@ -134,7 +142,7 @@ def validate_explainer_data(data: ExplainerData) -> None:
         if fund.benchmark_id not in data.benchmarks:
             raise ValueError(f"Benchmark id '{fund.benchmark_id}' for fund '{fund.id}' does not exist in benchmarks.")
 
-    # 7. Returns must contain all 3 periods; every number must be finite; a return cannot be below -100
+    # 7. Returns must contain all available periods; every number must be finite; a return cannot be below -100
     for p in PERIODS:
         for s, ret in data.sector_returns[p].items():
             if not isinstance(ret, (int, float)) or isinstance(ret, bool) or not math.isfinite(ret):
@@ -143,20 +151,20 @@ def validate_explainer_data(data: ExplainerData) -> None:
                 raise ValueError(f"Return for sector '{s}' in period '{p}' cannot be below -100%.")
 
     for bm_id, bm in data.benchmarks.items():
-        for p in PERIODS:
+        for p in avail:
             if p not in bm.returns:
                 raise ValueError(f"Returns for benchmark '{bm_id}' must contain period '{p}'.")
-            ret = bm.returns[p]
+        for p, ret in bm.returns.items():
             if not isinstance(ret, (int, float)) or isinstance(ret, bool) or not math.isfinite(ret):
                 raise ValueError(f"Return for benchmark '{bm_id}' in period '{p}' must be a finite number.")
             if ret < -100.0:
                 raise ValueError(f"Return for benchmark '{bm_id}' in period '{p}' cannot be below -100%.")
 
     for fund in data.funds:
-        for p in PERIODS:
+        for p in avail:
             if p not in fund.returns:
                 raise ValueError(f"Returns for fund '{fund.id}' must contain period '{p}'.")
-            ret = fund.returns[p]
+        for p, ret in fund.returns.items():
             if not isinstance(ret, (int, float)) or isinstance(ret, bool) or not math.isfinite(ret):
                 raise ValueError(f"Return for fund '{fund.id}' in period '{p}' must be a finite number.")
             if ret < -100.0:
@@ -193,6 +201,7 @@ def load_explainer_data(path: Optional[Union[str, Path]] = None) -> ExplainerDat
 
 def list_funds(data: ExplainerData) -> list[dict]:
     result = []
+    periods = available_periods(data)
     for fund in data.funds:
         bm = data.benchmarks.get(fund.benchmark_id)
         bm_name = bm.name if bm else ""
@@ -202,7 +211,7 @@ def list_funds(data: ExplainerData) -> list[dict]:
             "category": fund.category,
             "plan": fund.plan,
             "benchmark_name": bm_name,
-            "periods": list(PERIODS),
+            "periods": list(periods),
             "as_of": data.as_of,
         })
     return result
@@ -216,6 +225,9 @@ def get_attribution_input(data: ExplainerData, fund_id: str, period: str) -> Att
     if period not in PERIODS:
         raise ValueError("Unknown period.")
 
+    if period not in available_periods(data):
+        raise ValueError("This period is not available yet.")
+
     benchmark = data.benchmarks[fund.benchmark_id]
 
     return AttributionInput(
@@ -225,3 +237,4 @@ def get_attribution_input(data: ExplainerData, fund_id: str, period: str) -> Att
         benchmark_weights=benchmark.weights,
         sector_returns=data.sector_returns[period],
     )
+

@@ -11,9 +11,11 @@ from app.services.explainer_data import (
     load_explainer_data,
     list_funds,
     get_attribution_input,
+    available_periods,
     PERIODS,
 )
 from app.services.explainer_engine import calculate_attribution
+
 
 
 def get_valid_test_data() -> dict:
@@ -292,3 +294,75 @@ def test_missing_file():
     missing = Path("non_existent_explainer_file.json")
     with pytest.raises(FileNotFoundError, match="Explainer data file not found"):
         load_explainer_data(missing)
+
+
+def get_1y_only_test_data() -> dict:
+    raw = get_valid_test_data()
+    raw["sector_returns"]["6M"] = {}
+    raw["sector_returns"]["3Y"] = {}
+    raw["benchmarks"]["benchmark_1"]["returns"] = {"1Y": 15.0}
+    raw["funds"][0]["returns"] = {"1Y": 18.0}
+    return raw
+
+
+def test_only_1y_filled_loads_and_list_funds(tmp_path):
+    raw = get_1y_only_test_data()
+    file_path = write_json(tmp_path, raw)
+
+    data = load_explainer_data(file_path)
+    assert available_periods(data) == ["1Y"]
+
+    funds = list_funds(data)
+    assert len(funds) == 1
+    assert funds[0]["periods"] == ["1Y"]
+
+
+def test_no_periods_available_raises_error(tmp_path):
+    raw = get_valid_test_data()
+    raw["sector_returns"]["6M"] = {}
+    raw["sector_returns"]["1Y"] = {}
+    raw["sector_returns"]["3Y"] = {}
+    file_path = write_json(tmp_path, raw)
+
+    with pytest.raises(ValueError, match="At least one period must be available"):
+        load_explainer_data(file_path)
+
+
+def test_active_sector_missing_return_in_available_period(tmp_path):
+    raw = get_1y_only_test_data()
+    del raw["sector_returns"]["1Y"]["IT"]
+    file_path = write_json(tmp_path, raw)
+
+    with pytest.raises(ValueError, match="Active sector 'IT' is missing a sector return for period '1Y'"):
+        load_explainer_data(file_path)
+
+
+def test_unavailable_period_requested_raises_error(tmp_path):
+    raw = get_1y_only_test_data()
+    file_path = write_json(tmp_path, raw)
+
+    data = load_explainer_data(file_path)
+    with pytest.raises(ValueError, match="^This period is not available yet.$"):
+        get_attribution_input(data, "test-fund-a", "6M")
+
+
+def test_real_explainer_funds_file():
+    data = load_explainer_data()
+    assert data.schema_version == 1
+    assert available_periods(data) == ["1Y"]
+
+    funds = list_funds(data)
+    assert any(f["id"] == "kotak-large-cap-reg-g" for f in funds)
+    fund_info = next(f for f in funds if f["id"] == "kotak-large-cap-reg-g")
+    assert fund_info["periods"] == ["1Y"]
+
+    attr_input = get_attribution_input(data, "kotak-large-cap-reg-g", "1Y")
+    result = calculate_attribution(attr_input)
+
+    assert result.gap_pts == -0.3
+    assert result.top_drivers == []
+
+    mm_sector = next(s for s in result.sectors if s.sector == "Metals & Mining")
+    assert mm_sector.effect_pts == -0.3
+
+
