@@ -18,7 +18,9 @@ export default function useExplainer(language) {
   const hasData = useRef(false);
   const slowTimer = useRef(null);
   const langRef = useRef(language);
-  langRef.current = language;
+  useEffect(() => {
+    langRef.current = language;
+  }, [language]);
 
   const clearSlow = () => {
     clearTimeout(slowTimer.current);
