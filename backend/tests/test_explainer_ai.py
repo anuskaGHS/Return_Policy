@@ -226,7 +226,7 @@ def test_good_mocked_reply_returns_ai():
             MagicMock(message=MagicMock(content=mock_json))
         ]
         out = generate_explainer_text(res, "Fund A", "Benchmark B", "1Y", "2026-03-31")
-        assert out["source"] == "code"
+        assert out["source"] == "ai"
         assert out["en"] == " ".join(en_pts)
 
 
@@ -342,7 +342,7 @@ def test_client_raising_exception_falls_back():
         assert out["source"] == "code"
 
 
-def test_mocked_reply_identical_to_key_points_returns_code():
+def test_mocked_reply_identical_to_key_points_returns_ai():
     res = AttributionResult(
         fund_return_pct=10.0,
         benchmark_return_pct=12.0,
@@ -362,7 +362,7 @@ def test_mocked_reply_identical_to_key_points_returns_code():
             MagicMock(message=MagicMock(content=mock_json))
         ]
         out = generate_explainer_text(res, "Fund A", "Benchmark B", "1Y", "2026-03-31")
-        assert out["source"] == "code"
+        assert out["source"] == "ai"
         assert out["en"] == " ".join(en_pts)
 
 
