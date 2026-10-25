@@ -269,10 +269,11 @@ def generate_explainer_text(
                 logger.warning("Forbidden money term found in %s text.", lang)
                 return fallback_response
 
+        same_text = " ".join(en.split()) == " ".join(fallback_response["en"].split()) and " ".join(hi.split()) == " ".join(fallback_response["hi"].split())
         return {
             "en": en,
             "hi": hi,
-            "source": "ai",
+            "source": "code" if same_text else "ai",
             "key_points": key_points,
             "key_points_hi": key_points_hi,
         }

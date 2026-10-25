@@ -137,7 +137,9 @@ def test_valid_mocked_groq_reply_returns_source_ai(monkeypatch):
     kp_en = base_res["explanation"]["key_points"]
     kp_hi = base_res["explanation"]["key_points_hi"]
 
-    mock_json = json.dumps({"en": " ".join(kp_en), "hi": " ".join(kp_hi)})
+    reworded_en = " ".join(kp_en).replace("Over the last", "In the last", 1)
+    assert reworded_en != " ".join(kp_en)
+    mock_json = json.dumps({"en": reworded_en, "hi": " ".join(kp_hi)})
 
     with patch("app.services.explainer_ai.Groq") as mock_groq:
         client = mock_groq.return_value

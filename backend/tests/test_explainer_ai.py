@@ -226,7 +226,7 @@ def test_good_mocked_reply_returns_ai():
             MagicMock(message=MagicMock(content=mock_json))
         ]
         out = generate_explainer_text(res, "Fund A", "Benchmark B", "1Y", "2026-03-31")
-        assert out["source"] == "ai"
+        assert out["source"] == "code"
         assert out["en"] == " ".join(en_pts)
 
 
@@ -340,3 +340,62 @@ def test_client_raising_exception_falls_back():
         client.chat.completions.create.side_effect = RuntimeError("Network timeout connecting to Groq")
         out = generate_explainer_text(res, "Fund A", "Benchmark B", "1Y", "2026-03-31")
         assert out["source"] == "code"
+
+
+def test_mocked_reply_identical_to_key_points_returns_code():
+    res = AttributionResult(
+        fund_return_pct=10.0,
+        benchmark_return_pct=12.0,
+        gap_pts=-2.0,
+        explained_pts=-1.0,
+        unexplained_pts=-1.0,
+        sectors=[],
+        top_drivers=[],
+    )
+    en_pts, hi_pts = build_key_points(res, "Fund A", "Benchmark B", "1Y", "2026-03-31")
+    mock_json = json.dumps({"en": " ".join(en_pts), "hi": " ".join(hi_pts)})
+
+    with patch("app.services.explainer_ai.settings.GROQ_API_KEY", "fake-key"), \
+         patch("app.services.explainer_ai.Groq") as mock_groq:
+        client = mock_groq.return_value
+        client.chat.completions.create.return_value.choices = [
+            MagicMock(message=MagicMock(content=mock_json))
+        ]
+        out = generate_explainer_text(res, "Fund A", "Benchmark B", "1Y", "2026-03-31")
+        assert out["source"] == "code"
+        assert out["en"] == " ".join(en_pts)
+
+
+def test_mocked_reply_different_passes_guards_returns_ai():
+    res = AttributionResult(
+        fund_return_pct=10.0,
+        benchmark_return_pct=12.0,
+        gap_pts=-2.0,
+        explained_pts=-1.0,
+        unexplained_pts=-1.0,
+        sectors=[],
+        top_drivers=[],
+    )
+    en_pts, hi_pts = build_key_points(res, "Fund A", "Benchmark B", "1Y", "2026-03-31")
+    reworded_en = (
+        "During the period, Fund A returned 10.0% and Benchmark B had 12.0%. "
+        "The gap was 2.0 percentage points. Sector mix covers 1.0 points, while 1.0 points are other factors. "
+        "Approximated as of 31 March 2026. Past performance does not guarantee future returns."
+    )
+    reworded_hi = (
+        "इस अवधि में Fund A ने 10.0% और Benchmark B ने 12.0% रिटर्न दिया। "
+        "फ़र्क़ 2.0 प्रतिशत अंक रहा। सेक्टर मिक्स से 1.0 प्रतिशत अंक समझ आते हैं, जबकि 1.0 प्रतिशत अंक अन्य कारणों से हैं। "
+        "31 March 2026 के अनुसार अनुमान। पिछला प्रदर्शन भविष्य के रिटर्न की गारंटी नहीं है।"
+    )
+    mock_json = json.dumps({"en": reworded_en, "hi": reworded_hi})
+
+    with patch("app.services.explainer_ai.settings.GROQ_API_KEY", "fake-key"), \
+         patch("app.services.explainer_ai.Groq") as mock_groq:
+        client = mock_groq.return_value
+        client.chat.completions.create.return_value.choices = [
+            MagicMock(message=MagicMock(content=mock_json))
+        ]
+        out = generate_explainer_text(res, "Fund A", "Benchmark B", "1Y", "2026-03-31")
+        assert out["source"] == "ai"
+        assert out["en"] == reworded_en
+        assert out["hi"] == reworded_hi
