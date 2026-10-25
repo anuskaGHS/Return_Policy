@@ -164,6 +164,139 @@ def _find_break_even_cagr(
     return round(mid, 4)
 
 
+
+def _format_indian_number(value: float) -> str:
+    """Round to rupees and group digits in Indian numbering style."""
+    rounded = int(round(float(value)))
+    sign = "-" if rounded < 0 else ""
+    digits = str(abs(rounded))
+
+    if len(digits) <= 3:
+        return sign + digits
+
+    groups = [digits[-3:]]
+    digits = digits[:-3]
+    while digits:
+        groups.insert(0, digits[-2:] if len(digits) > 2 else digits)
+        digits = digits[:-2] if len(digits) > 2 else ""
+
+    return sign + ",".join(groups)
+
+
+def _months_as_years(months: int, language: str) -> str:
+    years, remaining = divmod(max(0, int(months)), 12)
+
+    if language == "hi":
+        parts = ([f"{years} साल"] if years else [])
+        parts += ([f"{remaining} महीने"] if remaining else [])
+        return " ".join(parts) if parts else "0 महीने"
+
+    parts = (
+        [f"{years} year" if years == 1 else f"{years} years"]
+        if years else []
+    )
+    parts += (
+        [f"{remaining} month" if remaining == 1 else f"{remaining} months"]
+        if remaining else []
+    )
+    return " ".join(parts) if parts else "0 months"
+
+
+def _build_key_points(
+    *,
+    loan_closure_month,
+    invest_closure_month,
+    interest_saved,
+    net_prepay,
+    net_invest,
+    net_wealth_difference,
+    recommendation,
+    break_even_cagr,
+    expected_cagr,
+):
+    """Build matching English and Hindi highlights from calculated results."""
+    a_close = int(loan_closure_month)
+    b_close = int(invest_closure_month)
+
+    a_text = _months_as_years(a_close, "en")
+    a_text_hi = _months_as_years(a_close, "hi")
+    interest = _format_indian_number(interest_saved)
+    net_a = _format_indian_number(net_prepay)
+    net_b = _format_indian_number(net_invest)
+    diff = _format_indian_number(net_wealth_difference)
+    be = f"{break_even_cagr:.2f}"
+    cagr = f"{expected_cagr:g}"
+
+    en = [
+        f"If you prepay, the loan closes in month {a_close} "
+        f"({a_text}) instead of month {b_close}."
+    ]
+    hi = [
+        f"लोन जल्दी चुकाने पर लोन महीना {a_close} ({a_text_hi}) "
+        f"में बंद हो जाता है, महीना {b_close} में नहीं।"
+    ]
+
+    if interest_saved > 0:
+        en.append(f"That saves about ₹{interest} in interest.")
+        hi.append(f"इससे ब्याज में करीब ₹{interest} की बचत होती है।")
+
+    equal = abs(net_prepay - net_invest) < 0.005
+
+    if equal:
+        en.append("On these assumptions both options end with the same money.")
+        hi.append("इन अनुमानों पर दोनों विकल्पों में अंत में बराबर रकम बचती है।")
+    elif recommendation == "Invest":
+        en.append(
+            f"If you invest the extra money instead, you end with ₹{net_b} "
+            f"against ₹{net_a}, a difference of ₹{diff}, after tax on the gains."
+        )
+        hi.append(
+            f"इसके बजाय अतिरिक्त रकम निवेश करने पर अंत में ₹{net_b} बचते हैं, "
+            f"जबकि लोन जल्दी चुकाने पर ₹{net_a}। अंतर ₹{diff} है, "
+            "मुनाफ़े पर टैक्स के बाद।"
+        )
+    else:
+        en.append(
+            f"If you prepay, you end with ₹{net_a} against ₹{net_b} "
+            f"if you invest, a difference of ₹{diff}, after tax on the gains."
+        )
+        hi.append(
+            f"लोन जल्दी चुकाने पर अंत में ₹{net_a} बचते हैं, जबकि निवेश "
+            f"करने पर ₹{net_b}। अंतर ₹{diff} है, मुनाफ़े पर टैक्स के बाद।"
+        )
+
+    if not equal:
+        if recommendation == "Invest":
+            en.append(
+                f"The break-even return is {be}% a year. If the market gives "
+                "less than that, prepaying comes out ahead."
+            )
+            hi.append(
+                f"ब्रेक-ईवन रिटर्न सालाना {be}% है। बाज़ार इससे कम दे तो "
+                "लोन जल्दी चुकाना आगे रहता है।"
+            )
+        else:
+            en.append(
+                f"The break-even return is {be}% a year. If the market gives "
+                "more than that, investing comes out ahead."
+            )
+            hi.append(
+                f"ब्रेक-ईवन रिटर्न सालाना {be}% है। बाज़ार इससे ज़्यादा दे तो "
+                "निवेश आगे रहता है।"
+            )
+
+    en.append(
+        f"This assumes a steady {cagr}% return and a fixed loan rate. "
+        "Real markets go up and down."
+    )
+    hi.append(
+        f"यह मानकर चला गया है कि रिटर्न हर साल {cagr}% रहेगा और लोन की दर "
+        "तय रहेगी। असल बाज़ार ऊपर-नीचे होता है।"
+    )
+
+    return en, hi
+
+
 def calculate_loan_vs_invest(
     outstanding_principal: Any = None,
     annual_interest_rate_pct: Optional[float] = None,
@@ -225,13 +358,32 @@ def calculate_loan_vs_invest(
         recommendation = "Invest"
 
     notes = [
-        "Home Loan Tax Benefits Omitted: Section 24(b) tax deductions (up to ₹2,00,000/year on interest) are excluded in this baseline comparison.",
-        "Single Redemption LTCG Taxation: Equity SIP corpus is assumed redeemed in a single tranche at the end of the original tenure, taxed at 12.5% on capital gains exceeding the ₹1,25,000 exemption limit under Section 112A (Budget 2024).",
-        "Annuity-Due Monthly Compounding: Equity SIP compounding assumes beginning-of-month contributions compounding at a nominal monthly rate of (expected_equity_cagr_pct / 12).",
-        "Identical Monthly Outflow Discipline: Both strategies deploy the exact same monthly cash outflow (EMI + monthly surplus). In Strategy A, any leftover cash in the month of loan closure is invested into SIP, and the full freed amount (EMI + surplus) is invested thereafter.",
-        "Break-Even CAGR Solved Numerically: Calculated via high-precision bisection search (60 iterations) to find the equity CAGR hurdle rate where both strategies generate identical terminal net wealth.",
-        "Constant Parameters Assumed: Loan interest rate and equity returns are assumed constant over the entire tenure; floating rate revisions and market volatility are not simulated."
+        "Home loan tax benefits left out: tax deductions on home loan interest (Section 24(b), up to ₹2,00,000 a year) are not counted. They could change the result.",
+        "Tax on gains: the investment is assumed to be sold in one go at the end, with 12.5% tax on gains above ₹1,25,000 (Section 112A). Check the current rates before you decide.",
+        "Monthly investing: each month’s money is invested at the start of the month and grows at your expected return divided by 12.",
+        "Same monthly spend: both options use the same total every month (EMI plus your extra money). Under Prepay, the leftover in the month the loan closes, and the full amount after that, goes into investing.",
+        "Break-even return: the yearly return at which both options end with the same money. It is found by repeated trial, not by a formula.",
+        "Fixed rates: the loan rate and the investment return stay the same for the whole period. Real loans can change rate and markets go up and down."
     ]
+    notes_hi = [
+        "होम लोन के टैक्स लाभ शामिल नहीं: होम लोन के ब्याज पर टैक्स कटौती (धारा 24(b), साल में ₹2,00,000 तक) नहीं गिनी गई है। इससे नतीजा बदल सकता है।",
+        "मुनाफ़े पर टैक्स: मान लिया गया है कि निवेश अंत में एक बार में बेचा जाएगा और ₹1,25,000 से ऊपर के मुनाफ़े पर 12.5% टैक्स लगेगा (धारा 112A)। फ़ैसले से पहले मौजूदा दरें जाँच लें।",
+        "हर महीने निवेश: हर महीने की रकम महीने की शुरुआत में निवेश होती है और आपके अपेक्षित सालाना रिटर्न को 12 से भाग देकर हर महीने बढ़ती है।",
+        "हर महीने उतना ही खर्च: दोनों विकल्पों में हर महीने कुल रकम बराबर है (EMI और आपकी अतिरिक्त रकम)। लोन जल्दी चुकाने में, लोन बंद होने के महीने की बची रकम और उसके बाद पूरी रकम निवेश में जाती है।",
+        "ब्रेक-ईवन रिटर्न: वह सालाना रिटर्न जिस पर दोनों विकल्पों में अंत में बराबर रकम बचती है। इसे बार-बार आज़माकर निकाला गया है, किसी सीधे सूत्र से नहीं।",
+        "तय दरें: पूरी अवधि में लोन की दर और निवेश का रिटर्न एक जैसे माने गए हैं। असल में लोन की दर बदल सकती है और बाज़ार ऊपर-नीचे होता है।"
+    ]
+    key_points, key_points_hi = _build_key_points(
+        loan_closure_month=cl_a,
+        invest_closure_month=cl_b,
+        interest_saved=int_b - int_a,
+        net_prepay=net_a,
+        net_invest=net_b,
+        net_wealth_difference=diff,
+        recommendation=recommendation,
+        break_even_cagr=break_even_cagr,
+        expected_cagr=cagr_pct,
+    )
 
     strategy_a_res = LoanStrategyResult(
         strategy_name="Prepay",
@@ -258,5 +410,8 @@ def calculate_loan_vs_invest(
         recommendation=recommendation,
         break_even_cagr=break_even_cagr,
         break_even_cagr_pct=break_even_cagr,
-        notes=notes
+        notes=notes,
+        notes_hi=notes_hi,
+        key_points=key_points,
+        key_points_hi=key_points_hi,
     )
