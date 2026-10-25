@@ -19,9 +19,9 @@ export function mockDashboard(payload) {
   const insurance = c.insurance;
   const score = income ? 61 : null;
   return Promise.resolve({
-    health: score == null ? null : { score, tier: 'Balanced Saver', points: { sip: 23, loan: 14, ins: 8, tax: 10, emg: 6 } },
+    health: score == null ? null : { score, tier: 'Balanced Saver', tier_hi: 'संतुलित बचतकर्ता', points: { sip: 23, loan: 14, ins: 8, tax: 10, emg: 6 } },
     cards: { sip: sip ? { current_value: sip.current_value, invested_amount: sip.invested_amount, absolute_return_pct: sip.invested_amount ? ((sip.current_value - sip.invested_amount) / sip.invested_amount) * 100 : null, fund_count: sip.fund_count } : null, loan: loan ? { outstanding_principal: loan.outstanding_principal, emi_amount: loan.emi_amount, interest_rate_pct: loan.interest_rate_pct, emi_share_of_income_pct: income ? (loan.emi_amount / income) * 100 : null } : null, insurance: insurance && income ? { sum_assured: insurance.sum_assured, cover_multiple_of_income: insurance.sum_assured / (income * 12), suggested_cover: income * 120, gap: Math.max(0, income * 120 - insurance.sum_assured) } : null, fd: c.fd ? { principal_amount: c.fd.principal_amount, maturity_date: c.fd.maturity_date, months_to_maturity: 8 } : null },
-    findings: insurance && loan ? [{ id: 'loan_vs_cover', title: 'Loan and cover', text_en: `Your home loan is ₹${Math.round(loan.outstanding_principal / 100000)}L and your term cover is ₹${Math.round(insurance.sum_assured / 100000)}L.`, text_hi: 'आपके होम लोन और टर्म कवर के आँकड़े साथ में देखें।', links: [{ label: 'Open in What-If Simulator', target: 'calculator' }] }] : [],
+    findings: insurance && loan ? [{ id: 'loan_vs_cover', title: 'Loan and cover', title_hi: 'लोन और कवर', text_en: `Your home loan is ₹${Math.round(loan.outstanding_principal / 100000)}L and your term cover is ₹${Math.round(insurance.sum_assured / 100000)}L.`, text_hi: 'आपके होम लोन और टर्म कवर के आँकड़े साथ में देखें।', links: [{ label: 'Open in What-If Simulator', target: 'calculator' }] }] : [],
     missing: Object.entries(c).filter(([, value]) => !value || !Object.values(value).some((item) => item !== '' && item != null)).map(([key]) => key), ai_source: 'none', _confirmed: c,
   });
 }

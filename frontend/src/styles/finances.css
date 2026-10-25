@@ -592,6 +592,10 @@
   color: #15805a;
 }
 
+.mf-bad {
+  color: #b4301f;
+}
+
 .mf-subhead {
   margin: 36px 0 14px;
   font-size: 1.05rem;
@@ -634,6 +638,12 @@
   border: 1px solid var(--mf-border);
   border-radius: 999px;
   color: var(--mf-soft);
+  font-size: 0.86rem;
+}
+
+.mf-tool-disabled {
+  padding: 12px 18px;
+  color: var(--mf-muted);
   font-size: 0.86rem;
 }
 
