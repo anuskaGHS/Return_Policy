@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.routers.policy import router as policy_router
 from app.routers.explainer import router as explainer_router
+from app.routers.finances import router as finances_router
 from app.services import explainer_service
 
 @asynccontextmanager
@@ -31,6 +32,7 @@ app.add_middleware(
 # Include Routers
 app.include_router(policy_router)
 app.include_router(explainer_router)
+app.include_router(finances_router)
 
 @app.get("/")
 def root():
