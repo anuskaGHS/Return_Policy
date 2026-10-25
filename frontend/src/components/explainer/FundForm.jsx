@@ -7,6 +7,11 @@ const PERIOD_LABEL = {
   '1Y': ['1Y', '1 साल'],
   '3Y': ['3Y', '3 साल'],
 };
+const PERIOD_LONG = {
+  '6M': ['6 months', '6 महीने'],
+  '1Y': ['1 year', '1 साल'],
+  '3Y': ['3 years', '3 साल'],
+};
 
 // The pale-blue "Your fund" panel: pick a fund and a period, then press Explain.
 export default function FundForm({ x }) {
@@ -38,24 +43,25 @@ export default function FundForm({ x }) {
 
       <div>
         <span className="rx-lbl" id="rx-pl">{L('Period', 'अवधि')}</span>
-        <div className="rx-seg" role="group" aria-labelledby="rx-pl">
-          {PERIOD_ORDER.map((p) => {
-            const ok = available.includes(p);
-            return (
+        {available.length > 1 ? (
+          <div className="rx-seg" role="group" aria-labelledby="rx-pl" style={{ gridTemplateColumns: `repeat(${available.length},1fr)` }}>
+            {PERIOD_ORDER.filter((p) => available.includes(p)).map((p) => (
               <button
                 key={p}
                 type="button"
                 className={period === p ? 'rx-on' : ''}
                 aria-pressed={period === p}
-                disabled={!ok}
-                title={ok ? undefined : L('Not available yet', 'अभी उपलब्ध नहीं')}
-                onClick={() => ok && x.setPeriod(p)}
+                onClick={() => x.setPeriod(p)}
               >
                 {L(PERIOD_LABEL[p][0], PERIOD_LABEL[p][1])}
               </button>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="rx-fieldro" aria-labelledby="rx-pl">
+            {available[0] ? L(PERIOD_LONG[available[0]][0], PERIOD_LONG[available[0]][1]) : '…'}
+          </div>
+        )}
       </div>
 
       {r && (
@@ -67,7 +73,11 @@ export default function FundForm({ x }) {
       <button type="button" className="rx-go" onClick={x.explain} disabled={busy || !fund}>
         {busy ? L('Working…', 'काम हो रहा है…') : L('Explain', 'समझाएँ')} <ArrowIcon />
       </button>
-      <p className="rx-gonote">{L('The numbers come from our calculation. The AI only explains them.', 'आँकड़े हमारी गणना से आते हैं। AI सिर्फ़ उन्हें समझाता है।')}</p>
+      <p className="rx-gonote">
+        {data && data.explanation && data.explanation.source === 'ai'
+          ? L('The numbers come from our calculation. The AI only explains them.', 'आँकड़े हमारी गणना से आते हैं। AI सिर्फ़ उन्हें समझाता है।')
+          : L('All numbers come from our own calculation.', 'सारे आँकड़े हमारी अपनी गणना से आते हैं।')}
+      </p>
     </section>
   );
 }

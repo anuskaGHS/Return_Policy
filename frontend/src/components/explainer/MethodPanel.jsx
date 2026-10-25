@@ -1,6 +1,14 @@
 import useExplainerText from '../../hooks/useExplainerText.js';
 import { fmtDate, sectorLabel } from '../../lib/explainer/format.js';
 
+const InfoIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.8" />
+    <path d="M12 11v5.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    <circle cx="12" cy="7.6" r="1.1" fill="currentColor" />
+  </svg>
+);
+
 // A closed-by-default panel that lists where every number came from.
 export default function MethodPanel({ data }) {
   const { L, lang } = useExplainerText();
@@ -8,7 +16,7 @@ export default function MethodPanel({ data }) {
   const indexes = Object.entries(data.index_used || {});
   return (
     <details className="rx-method">
-      <summary>{L('How we got these numbers', 'ये आँकड़े कहाँ से आए')}</summary>
+      <summary><span className="rx-sumt"><InfoIcon />{L('How we got these numbers', 'ये आँकड़े कहाँ से आए')}</span></summary>
       <div className="rx-mbody">
         <div>
           <h4>{L('Data sources', 'डेटा के स्रोत')}</h4>

@@ -101,8 +101,10 @@ function Body({ x, onToolChange }) {
             <FundForm x={x} />
             <div className={`rx-rcol${busy ? ' rx-busy' : ''}`} aria-busy={busy}>
               <GapCard data={data} />
-              <AttributionCard data={data} />
             </div>
+          </div>
+          <div className={`rx-wide${busy ? ' rx-busy' : ''}`} aria-busy={busy}>
+            <AttributionCard data={data} />
           </div>
           {error && <ErrorBox kind={error} onRetry={x.explain} />}
           {busy && slow && (
