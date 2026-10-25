@@ -133,8 +133,11 @@ class DashboardCards(StrictModel):
     income: dict[str, float | int | None] | None = None
 
 class DashboardFinding(StrictModel):
+    id: str
     title: str
     title_hi: str
+    text_en: str
+    text_hi: str
 
 class DashboardResponse(StrictModel):
     health: HealthScoreResult | None
