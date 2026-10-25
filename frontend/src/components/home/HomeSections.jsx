@@ -37,7 +37,13 @@ function Arrow() {
  * Navigation is up to the app: pass onSimulatePersona(personaId) and onOpenEngine(), or rely on the
  * hash links (engineHref) when they are omitted.
  */
-export default function HomeSections({ onSimulatePersona, onOpenEngine, engineHref = '#calculator' }) {
+export default function HomeSections({
+  onSimulatePersona,
+  onOpenEngine,
+  onOpenFinances,
+  engineHref = '#calculator',
+  financesHref = '#finances',
+}) {
   return (
     <div className="hs">
       <section className="hs-ring-sec" aria-labelledby="hs-ring-h">
@@ -75,16 +81,44 @@ export default function HomeSections({ onSimulatePersona, onOpenEngine, engineHr
         </Reveal>
       </section>
 
-      <section className="hs-cta" aria-labelledby="hs-cta-h">
-        <Reveal as="h2" id="hs-cta-h">Run your household's numbers</Reveal>
-        <Reveal as="p">Your SIP, your EMI, your tax. Worked out in rupees.</Reveal>
-        <Reveal
-          as="a"
-          className="hs-btn"
-          href={engineHref}
-          onClick={onOpenEngine ? (e) => { e.preventDefault(); onOpenEngine(); } : undefined}
-        >
-          Run my numbers
+      <section className="hs-ways" aria-labelledby="hs-ways-h">
+        <Reveal className="hs-sec-head">
+          <h2 id="hs-ways-h">Two ways to start</h2>
+          <p>Test a decision, or look at your own money.</p>
+        </Reveal>
+        <Reveal className="hs-ways-grid">
+          <article className="hs-way-card">
+            <h3>Decision Engine</h3>
+            <p>Try a choice before you make it, in rupees.</p>
+            <ul className="hs-way-list">
+              <li>What-If Simulator: move a slider, watch the numbers</li>
+              <li>Smart Exit: hold or sell a fund</li>
+              <li>Loan vs Investment: prepay or invest</li>
+            </ul>
+            <a
+              className="hs-btn"
+              href={engineHref}
+              onClick={onOpenEngine ? (e) => { e.preventDefault(); onOpenEngine(); } : undefined}
+            >
+              Open Decision Engine
+            </a>
+          </article>
+          <article className="hs-way-card">
+            <h3>My Finances</h3>
+            <p>Add your own documents and see everything in one place.</p>
+            <ul className="hs-way-list">
+              <li>SIP statement, loan, term policy and FD in one dashboard</li>
+              <li>Health score and insurance gap check</li>
+              <li>Ask questions about your own numbers</li>
+            </ul>
+            <a
+              className="hs-btn"
+              href={financesHref}
+              onClick={onOpenFinances ? (e) => { e.preventDefault(); onOpenFinances(); } : undefined}
+            >
+              Open My Finances
+            </a>
+          </article>
         </Reveal>
       </section>
     </div>

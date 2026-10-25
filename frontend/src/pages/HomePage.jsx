@@ -25,6 +25,12 @@ export default function HomePage({ onNavigate, onSelectPreset }) {
     }
   };
 
+  const handleOpenFinances = () => {
+    if (onNavigate) {
+      onNavigate('finances');
+    }
+  };
+
   return (
     <div className="home-page-container resq-theme">
       {/* 1. HERO SECTION */}
@@ -43,6 +49,7 @@ export default function HomePage({ onNavigate, onSelectPreset }) {
       <HomeSections
         onSimulatePersona={handleSimulatePersona}
         onOpenEngine={handleOpenEngine}
+        onOpenFinances={handleOpenFinances}
       />
     </div>
   );
