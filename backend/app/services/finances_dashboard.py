@@ -70,6 +70,16 @@ def build_finances_dashboard(request: DashboardRequest) -> dict:
             emergency_months=user_inputs.emergency_months,
             long_term_pct=user_inputs.long_term_pct,
         )
+        tier_translations = {
+            "Critical Debt Stress": "गंभीर ऋण तनाव",
+            "Vulnerable Leveraged": "ऋण के प्रति संवेदनशील",
+            "Balanced Saver": "संतुलित बचतकर्ता",
+            "Solid Wealth Builder": "मजबूत संपत्ति निर्माता",
+            "Financially Resilient": "आर्थिक रूप से सुदृढ़",
+        }
+        health["tier_hi"] = tier_translations.get(
+            health["tier"], health["tier"]
+        )
 
     cards = {
         "sip": sip.model_dump(mode="json") if sip else None,
@@ -80,30 +90,31 @@ def build_finances_dashboard(request: DashboardRequest) -> dict:
     }
     findings = []
     if annual_income is not None:
-        if request.language == "hi":
-            findings.append(
-                f"वार्षिक सकल आय: ₹{annual_income:,.0f}"
-            )
-        else:
-            findings.append(
-                f"Annual gross income: ₹{annual_income:,.0f}"
-            )
-
+        findings.append(
+            {
+                "title": f"Annual gross income: ₹{annual_income:,.0f}",
+                "title_hi": f"वार्षिक सकल आय: ₹{annual_income:,.0f}",
+            }
+        )
     if suggested_cover is not None:
-        if request.language == "hi":
-            findings.append(
-                f"सुझाया गया जीवन बीमा कवर (वार्षिक आय का 10 गुना): ₹{suggested_cover:,.0f}"
-            )
-            findings.append(
-                f"अनुमानित बीमा कवर की कमी: ₹{cover_gap:,.0f}"
-            )
-        else:
-            findings.append(
-                f"Suggested life cover (10× annual income): ₹{suggested_cover:,.0f}"
-            )
-            findings.append(
-                f"Estimated cover gap: ₹{cover_gap:,.0f}"
-            )
+        findings.append(
+            {
+                "title": (
+                    "Suggested life cover "
+                    f"(10× annual income): ₹{suggested_cover:,.0f}"
+                ),
+                "title_hi": (
+                    "सुझाया गया जीवन बीमा कवर "
+                    f"(वार्षिक आय का 10 गुना): ₹{suggested_cover:,.0f}"
+                ),
+            }
+        )
+        findings.append(
+            {
+                "title": f"Estimated cover gap: ₹{cover_gap:,.0f}",
+                "title_hi": f"अनुमानित बीमा कवर की कमी: ₹{cover_gap:,.0f}",
+            }
+        )
 
     links = [
         "calculator",

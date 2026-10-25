@@ -78,6 +78,13 @@ def test_dashboard_findings_support_hindi():
 
     result = build_finances_dashboard(request)
 
-    assert any("वार्षिक सकल आय" in finding for finding in result["findings"])
-    assert any("सुझाया गया जीवन बीमा कवर" in finding for finding in result["findings"])
-    assert any("बीमा कवर की कमी" in finding for finding in result["findings"])
+    assert any(
+        "Annual gross income" in finding["title"]
+        and "वार्षिक सकल आय" in finding["title_hi"]
+        for finding in result["findings"]
+    )
+
+    assert all(
+        finding.get("title") and finding.get("title_hi")
+        for finding in result["findings"]
+    )

@@ -50,11 +50,10 @@ DOCUMENT_KEYWORDS = {
 }
 
 NUMBER_ONLY_PATTERN = re.compile(
-    r"^\s*(?:₹\s*)?"
+    r"^\s*(?:₹|■)?\s*"
     r"(?:\d{1,3}(?:,\d{2,3})+|\d+)"
     r"(?:\.\d+)?%?\s*$"
 )
-
 
 def drop_identity_lines(text: str) -> str:
     """Drop lines containing common identity labels; this is not foolproof."""

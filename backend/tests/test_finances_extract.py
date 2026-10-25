@@ -39,7 +39,8 @@ def test_rejects_unapproved_fields():
         raise AssertionError("An unapproved field should be rejected")
 
 
-def test_returns_fallback_when_api_key_is_missing():
+
+def test_extracts_labelled_loan_fields_when_api_key_is_missing():
     with patch("app.services.finances_extract.settings") as mock_settings:
         mock_settings.GROQ_API_KEY = ""
         fields, source = extract_financial_fields(
@@ -48,8 +49,11 @@ def test_returns_fallback_when_api_key_is_missing():
         )
 
     assert source == "fallback"
-    assert fields["emi_amount"] is None
+    assert fields["emi_amount"] == 48000.0
     assert fields["outstanding_principal"] is None
+    assert fields["interest_rate_pct"] is None
+    assert fields["remaining_months"] is None
+
 
 
 def test_unknown_document_type_does_not_call_ai():

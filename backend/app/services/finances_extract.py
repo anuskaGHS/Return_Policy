@@ -94,6 +94,92 @@ def _validate_fields(
     return values
 
 
+
+def _extract_fallback(
+    doc_type: str,
+    filtered_text: str,
+) -> dict[str, Any]:
+    """Extract values from explicitly labelled lines without an AI call."""
+    model = FIELD_MODELS[doc_type]
+    fields = _empty_fields(doc_type)
+    lines = [line.strip() for line in filtered_text.splitlines()]
+
+    patterns: dict[str, list[str]] = {
+        "salary_slip": [
+            r"monthly gross salary",
+            r"monthly net salary|estimated net pay|take[- ]home pay",
+        ],
+        "loan_schedule": [
+            r"outstanding principal|outstanding balance|loan balance",
+            r"monthly emi|emi amount|emi",
+            r"annual interest rate|interest rate",
+            r"remaining months|remaining tenure|tenure in months",
+        ],
+        "term_policy": [
+            r"sum assured|life cover|insurance cover",
+            r"annual premium|yearly premium",
+        ],
+        "fd_receipt": [
+            r"principal amount|deposit amount",
+            r"annual interest rate|interest rate",
+            r"estimated maturity value|maturity amount",
+            r"maturity date",
+        ],
+        "sip_statement": [
+            r"monthly sip amount|sip amount",
+            r"total invested amount|invested amount",
+            r"current value|current market value",
+            r"fund count|number of funds",
+            r"months invested|investment duration in months",
+        ],
+    }
+
+    field_names = list(model.model_fields)
+    field_patterns = patterns.get(doc_type, [])
+
+    for index, field_name in enumerate(field_names):
+        if index >= len(field_patterns):
+            continue
+
+        label_pattern = re.compile(field_patterns[index], re.IGNORECASE)
+
+        for line_index, line in enumerate(lines):
+            if not label_pattern.search(line):
+                continue
+
+            # Support amounts on the same line or on the next line.
+            candidates = [line]
+            if line_index + 1 < len(lines):
+                candidates.append(lines[line_index + 1])
+
+            for candidate in candidates:
+                cleaned = candidate.replace("■", "").replace("₹", "")
+                cleaned = cleaned.replace(",", "").strip()
+
+                # Avoid extracting numbers from label text.
+                if label_pattern.search(cleaned):
+                    cleaned = label_pattern.sub("", cleaned).strip(" :-")
+
+                match = re.fullmatch(r"(-?\d+(?:\.\d+)?%?)", cleaned)
+                if not match:
+                    continue
+
+                numeric_text = match.group(1).rstrip("%")
+                value = float(numeric_text)
+
+                if field_name.endswith("_months") or field_name == "fund_count":
+                    if value.is_integer():
+                        fields[field_name] = int(value)
+                else:
+                    fields[field_name] = value
+                break
+
+            if fields[field_name] is not None:
+                break
+
+    return model.model_validate(fields).model_dump()
+
+
 def extract_financial_fields(
     doc_type: str,
     filtered_text: str,
@@ -103,8 +189,9 @@ def extract_financial_fields(
         return _empty_fields(doc_type) if doc_type in FIELD_MODELS else {}, "fallback"
 
     api_key = settings.GROQ_API_KEY
+
     if not api_key or not api_key.strip():
-        return _empty_fields(doc_type), "fallback"
+        return _extract_fallback(doc_type, filtered_text), "fallback"
 
     model = FIELD_MODELS[doc_type]
     allowed_fields = list(model.model_fields)

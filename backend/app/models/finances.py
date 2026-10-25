@@ -122,6 +122,7 @@ class HealthScoreResult(StrictModel):
     points: dict[str, int]
     score: int
     tier: str
+    tier_hi: str
 
 
 class DashboardCards(StrictModel):
@@ -131,6 +132,9 @@ class DashboardCards(StrictModel):
     fd: dict[str, float | int | str | None] | None = None
     income: dict[str, float | int | None] | None = None
 
+class DashboardFinding(StrictModel):
+    title: str
+    title_hi: str
 
 class DashboardResponse(StrictModel):
     health: HealthScoreResult | None
@@ -139,7 +143,7 @@ class DashboardResponse(StrictModel):
     cover_gap: float | None
     cards: DashboardCards
     missing: list[str]
-    findings: list[str]
+    findings: list[DashboardFinding]
     links: list[str]
     ai_source: Literal["none"] = "none"
 
