@@ -95,6 +95,37 @@ def _validate_fields(
 
 
 
+MONTHS = {
+    "jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
+    "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12,
+}
+
+
+def _read_date(text: str) -> date | None:
+    """Read a date such as 25 October 2027, 25-10-2027 or 2027-10-25."""
+    text = text.strip(" :-")
+
+    match = re.search(r"(\d{4})-(\d{1,2})-(\d{1,2})", text)
+    if match:
+        year, month, day = (int(part) for part in match.groups())
+    else:
+        match = re.search(r"(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})", text)
+        if match:
+            day, month, year = (int(part) for part in match.groups())
+        else:
+            match = re.search(r"(\d{1,2})\s+([A-Za-z]{3,9})\.?,?\s+(\d{4})", text)
+            if not match or match.group(2)[:3].lower() not in MONTHS:
+                return None
+            day = int(match.group(1))
+            month = MONTHS[match.group(2)[:3].lower()]
+            year = int(match.group(3))
+
+    try:
+        return date(year, month, day)
+    except ValueError:
+        return None
+
+
 def _extract_fallback(
     doc_type: str,
     filtered_text: str,
@@ -127,8 +158,8 @@ def _extract_fallback(
         ],
         "sip_statement": [
             r"monthly sip amount|sip amount",
-            r"total invested amount|invested amount",
-            r"current value|current market value",
+            r"total invested amount|invested amount|total contributions",
+            r"current value|current market value|current illustrative value",
             r"fund count|number of funds",
             r"months invested|investment duration in months",
         ],
@@ -153,6 +184,14 @@ def _extract_fallback(
                 candidates.append(lines[line_index + 1])
 
             for candidate in candidates:
+                if field_name.endswith("_date"):
+                    without_label = label_pattern.sub("", candidate)
+                    found = _read_date(without_label)
+                    if found is not None:
+                        fields[field_name] = found
+                        break
+                    continue
+
                 cleaned = candidate.replace("■", "").replace("₹", "")
                 cleaned = cleaned.replace(",", "").strip()
 
@@ -235,6 +274,12 @@ def extract_financial_fields(
             response_data["fields"],
             filtered_text,
         )
+        # Fill only the fields the AI left empty, using the labelled lines.
+        labelled = _extract_fallback(doc_type, filtered_text)
+        for name, value in validated.items():
+            if value is None and labelled.get(name) is not None:
+                validated[name] = labelled[name]
+
         return validated, "ai"
 
     except (ValidationError, ValueError, TypeError, KeyError, json.JSONDecodeError):

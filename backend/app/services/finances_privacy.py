@@ -30,6 +30,7 @@ DOCUMENT_KEYWORDS = {
     "sip_statement": (
         "sip", "invested", "current value", "fund count",
         "months invested", "mutual fund", "units", "nav",
+        "contributions", "illustrative value",
     ),
     "loan_schedule": (
         "emi", "outstanding", "interest rate", "tenure",
@@ -55,6 +56,12 @@ NUMBER_ONLY_PATTERN = re.compile(
     r"(?:\.\d+)?%?\s*$"
 )
 
+DATE_ONLY_PATTERN = re.compile(
+    r"^\s*(?:\d{1,2}[\s/.-]+[A-Za-z]{3,9}\.?,?[\s/.-]+\d{4}"
+    r"|\d{1,2}[/.-]\d{1,2}[/.-]\d{4}|\d{4}-\d{1,2}-\d{1,2})\s*$"
+)
+
+
 def drop_identity_lines(text: str) -> str:
     """Drop lines containing common identity labels; this is not foolproof."""
     return "\n".join(
@@ -72,7 +79,7 @@ def mask_identifiers(text: str) -> str:
 
 
 def keep_keyword_lines(text: str, doc_type: str) -> str:
-    """Keep relevant document lines and an immediately following numeric line.
+    """Keep relevant document lines and an immediately following number or date line.
 
     The returned text is capped at 4,000 characters.
     """
@@ -92,7 +99,7 @@ def keep_keyword_lines(text: str, doc_type: str) -> str:
 
         if index + 1 < len(lines):
             next_line = lines[index + 1]
-            if NUMBER_ONLY_PATTERN.fullmatch(next_line):
+            if NUMBER_ONLY_PATTERN.fullmatch(next_line) or DATE_ONLY_PATTERN.fullmatch(next_line):
                 candidates.append(next_line)
 
         for candidate in candidates:
