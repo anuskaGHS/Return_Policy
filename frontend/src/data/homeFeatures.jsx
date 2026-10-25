@@ -123,7 +123,7 @@ export const FEATURES = [
     </>),
   },
   {
-    id: 'loan-vs-sip', status: 'soon', palette: 'emerald', kick: 'Loan vs SIP', icon: 'scale',
+    id: 'loan-vs-sip', status: 'live', palette: 'emerald', kick: 'Loan vs SIP', icon: 'scale',
     heading: <h4 className="hs-hd hs-h-heavy">Prepay<br />or invest?</h4>,
     text: 'See who wins, in rupees.',
     viz: (<>

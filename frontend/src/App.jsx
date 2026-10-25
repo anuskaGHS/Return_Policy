@@ -6,6 +6,7 @@ import WhatIfPage from './pages/WhatIfPage';
 import ExitPage from './pages/ExitPage';
 import ExplainerPage from './pages/ExplainerPage';
 import FinancesPage from './pages/FinancesPage';
+import LoanPage from './pages/LoanPage';
 import { derive } from './lib/whatif/healthScore.js';
 import ErrorBanner from './components/ErrorBanner';
 import { simulatePolicy, checkBackendHealth } from './services/api';
@@ -21,7 +22,7 @@ export default function App() {
   // Navigation tab: 'home' | 'about' | 'calculator'
   const [activeTab, setActiveTab] = useState(() => {
     const hash = window.location.hash.replace('#', '').toLowerCase();
-    if (hash === 'exit-advisor' || hash === 'explainer') return 'calculator';
+    if (hash === 'exit-advisor' || hash === 'explainer' || hash === 'loan') return 'calculator';
     if (['home', 'about', 'calculator', 'finances'].includes(hash)) {
       return hash;
     }
@@ -33,6 +34,7 @@ export default function App() {
     const hash = window.location.hash.replace('#', '').toLowerCase();
     if (hash === 'exit-advisor') return 'exitAdvisor';
     if (hash === 'explainer') return 'explainer';
+    if (hash === 'loan') return 'loan';
     return 'simulator';
   });
 
@@ -56,6 +58,9 @@ export default function App() {
       } else if (hash === 'explainer') {
         setActiveTab('calculator');
         setCalculatorSubTab('explainer');
+      } else if (hash === 'loan') {
+        setActiveTab('calculator');
+        setCalculatorSubTab('loan');
       } else if (['home', 'about', 'calculator', 'finances'].includes(hash)) {
         setActiveTab(hash);
         if (hash === 'calculator') {
@@ -72,7 +77,7 @@ export default function App() {
     setActiveTab(tab);
     if (tab === 'calculator') {
       setCalculatorSubTab(subTab);
-      window.location.hash = subTab === 'exitAdvisor' ? '#exit-advisor' : subTab === 'explainer' ? '#explainer' : '#calculator';
+      window.location.hash = subTab === 'exitAdvisor' ? '#exit-advisor' : subTab === 'explainer' ? '#explainer' : subTab === 'loan' ? '#loan' : '#calculator';
     } else {
       window.location.hash = `#${tab}`;
     }
@@ -182,6 +187,7 @@ export default function App() {
         onToolChange={(id) => {
           if (id === 'smartexit') navigateTo('calculator', 'exitAdvisor');
           if (id === 'explainer') navigateTo('calculator', 'explainer');
+          if (id === 'loan') navigateTo('calculator', 'loan');
         }}
       />
     );
@@ -195,6 +201,7 @@ export default function App() {
         onToolChange={(id) => {
           if (id === 'whatif') navigateTo('calculator', 'simulator');
           if (id === 'explainer') navigateTo('calculator', 'explainer');
+          if (id === 'loan') navigateTo('calculator', 'loan');
         }}
       />
     );
@@ -208,6 +215,21 @@ export default function App() {
         onToolChange={(id) => {
           if (id === 'whatif') navigateTo('calculator', 'simulator');
           if (id === 'smartexit') navigateTo('calculator', 'exitAdvisor');
+          if (id === 'loan') navigateTo('calculator', 'loan');
+        }}
+      />
+    );
+  }
+
+  if (activeTab === 'calculator' && calculatorSubTab === 'loan') {
+    return (
+      <LoanPage
+        lang={language}
+        onLangChange={setLanguage}
+        onToolChange={(id) => {
+          if (id === 'whatif') navigateTo('calculator', 'simulator');
+          if (id === 'smartexit') navigateTo('calculator', 'exitAdvisor');
+          if (id === 'explainer') navigateTo('calculator', 'explainer');
         }}
       />
     );

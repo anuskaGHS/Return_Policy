@@ -1,12 +1,12 @@
 import { useLang, useT } from '../../hooks/useLang.js';
 
-// The Decision Engine tools. `active` is 'whatif', 'smartexit' or 'explainer'; `onSelect` is optional.
+// The Decision Engine tools. `active` is 'whatif', 'smartexit', 'explainer' or 'loan'; `onSelect` is optional.
 // A tab marked `soon` is shown but cannot be opened yet.
 const TABS = [
   { id: 'whatif', label: 'What-If Policy Simulator' },
   { id: 'smartexit', label: 'Smart Exit & Hold Tax Advisor' },
   { id: 'explainer', label: 'Return Explainer', hi: 'रिटर्न एक्सप्लेनर' },
-  { id: 'loan', label: 'Loan vs Investment', hi: 'लोन बनाम निवेश', soon: true },
+  { id: 'loan', label: 'Loan vs Investment', hi: 'लोन बनाम निवेश' },
 ];
 
 export default function ToolTabs({ active = 'whatif', onSelect }) {
