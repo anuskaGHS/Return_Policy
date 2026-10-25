@@ -9,7 +9,10 @@ async function request(path, options = {}) {
   try {
     const response = await fetch(`${API_URL}/finances${path}`, { ...options, signal: controller.signal });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.detail || 'Something went wrong. Please try again.');
+    if (!response.ok) {
+      const detail = Array.isArray(data.detail) ? 'Please check the numbers and try again' : data.detail;
+      throw new Error(detail || 'Something went wrong. Please try again.');
+    }
     return data;
   } finally { clearTimeout(timeout); }
 }
@@ -22,6 +25,40 @@ export function extractDocuments(files, language = 'en') {
   return request('/extract', { method: 'POST', body: form });
 }
 
-export function getDashboard(payload) { return MOCK ? mockDashboard(payload) : request('/dashboard', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); }
-export function askChat(payload) { return MOCK ? mockChat(payload) : request('/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); }
+function removeEmptyFields(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return value;
+  return Object.fromEntries(Object.entries(value).filter(([, item]) => item !== '' && item !== null && item !== undefined));
+}
+
+function toDashboardPayload(payload = {}) {
+  const source = payload.confirmed || payload;
+  const dashboard = {};
+  for (const group of ['sip', 'loan', 'insurance', 'fd', 'income']) {
+    const values = removeEmptyFields(source[group]);
+    if (values && Object.keys(values).length > 0) dashboard[group] = values;
+  }
+  const userInputs = removeEmptyFields(payload.user_inputs);
+  if (userInputs && Object.keys(userInputs).length > 0) dashboard.user_inputs = userInputs;
+  dashboard.language = payload.language || 'en';
+  return dashboard;
+}
+
+function toChatHistory(history = []) {
+  return history.slice(-6).map((item) => ({
+    role: item.role === 'ai' || item.role === 'assistant' ? 'assistant' : 'user',
+    content: String(item.content ?? item.text ?? item.answer ?? '').slice(0, 1000),
+  }));
+}
+
+export function getDashboard(payload) {
+  if (MOCK) return mockDashboard(payload);
+  const dashboard = toDashboardPayload(payload);
+  return request('/dashboard', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dashboard) });
+}
+
+export function askChat(payload) {
+  if (MOCK) return mockChat(payload);
+  const dashboard = toDashboardPayload(payload);
+  return request('/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: payload.question, history: toChatHistory(payload.history), language: dashboard.language, dashboard }) });
+}
 export const isFinancesMock = MOCK;
