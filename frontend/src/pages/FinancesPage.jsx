@@ -37,7 +37,7 @@ function Upload({ files, docs, onFiles, onRead, onManual, sampleDocs, lang, busy
     <button className="mf-text-btn" type="button" onClick={onManual}>{t.manual}</button>
     {sampleDocs.length > 0 && <div className="mf-sample-links"><span>{t.sampleDocs}:</span>{sampleDocs.map((name) => <a key={name} href={`/sample-docs/${name}`} download>{name}</a>)}</div>}
     <p className="mf-privacy">{t.privacy}</p>
-    <div className="mf-file-list">{docs.map((doc) => <span className="mf-file" key={`${doc.file_name}-${doc.index}`}><i className={doc.status === 'read' ? 'ok' : doc.status === 'reading' ? 'reading' : 'wait'} />{doc.file_name} · {t[doc.status] || doc.status}</span>)}</div>
+    <div className="mf-file-list">{docs.map((doc) => <span className="mf-file" key={`${doc.file_name}-${doc.index}`}><i className={doc.status === 'read' ? 'ok' : doc.status === 'reading' ? 'reading' : doc.status === 'wait' ? 'idle' : 'wait'} />{doc.file_name} · {t[doc.status] || doc.status}</span>)}</div>
   </section>;
 }
 
@@ -76,11 +76,12 @@ export default function FinancesPage({ onOpenTool }) {
     if (selected.length > 5) { setMessage(t.tooMany); setFiles([]); return; }
     const invalid = selected.find((file) => (file.type && file.type !== 'application/pdf') || !file.name.toLowerCase().endsWith('.pdf') || file.size > 5 * 1024 * 1024);
     if (invalid) { setMessage(t.invalidFile); setFiles([]); return; }
-    setMessage(null); setFiles(selected); setDocs(selected.map((file, index) => ({ index, file_name: file.name, status: 'reading' })));
+    setMessage(null); setFiles(selected); setDocs(selected.map((file, index) => ({ index, file_name: file.name, status: 'wait' })));
   }
 
   async function readFiles() {
     setBusy(true); setMessage(null);
+    setDocs(files.map((file, index) => ({ index, file_name: file.name, status: 'reading' })));
     try { const result = await extractDocuments(files, lang); setDocs(result.documents || []); setConfirmed((current) => { const next = { ...current }; (result.documents || []).forEach((doc) => { const group = GROUPS[doc.doc_type]; if (group) next[group] = { ...next[group], ...doc.fields }; }); return next; }); setManualOpen(true); }
     catch (error) { setMessage(error.message || t.offline); setDocs(files.map((file, index) => ({ index, file_name: file.name, status: 'unreadable', fields: {} }))); setManualOpen(true); }
     finally { setBusy(false); }

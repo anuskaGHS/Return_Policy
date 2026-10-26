@@ -929,3 +929,7 @@
     grid-row: 1;
   }
 }
+
+.mf-file i.idle {
+  background: #8E95A3;
+}
