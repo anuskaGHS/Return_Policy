@@ -23,9 +23,22 @@ function sameNumbers(local, server) {
  *   ai       { mode, en, hi }: mode is 'quick' | 'loading' | 'ai' | 'stale' | 'fallback'
  *   submit   the "Get my exit advice" button: asks the backend for the AI explanation
  */
-export default function useExitAdvisor() {
+export default function useExitAdvisor(prefill) {
   const [now] = useState(() => new Date());
-  const [s, setS] = useState(INITIAL_STATE);
+  const initialPrefill = useMemo(() => {
+    if (!prefill || typeof prefill !== 'object') return {};
+    const p = {};
+    if (prefill.inv != null && prefill.inv !== '') p.inv = String(prefill.inv);
+    if (prefill.cur != null && prefill.cur !== '') p.cur = String(prefill.cur);
+    return p;
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const hasPrefill = Object.keys(initialPrefill).length > 0;
+  const [prefilled, setPrefilled] = useState(() => hasPrefill);
+  const [s, setS] = useState(() => ({
+    ...INITIAL_STATE,
+    ...initialPrefill,
+    ...(hasPrefill ? { scn: null } : {}),
+  }));
   const [dragging, setDragging] = useState(false);
   const [aiRes, setAiRes] = useState(null); // { status: 'loading' | 'ai' | 'fallback', sig, en, hi }
   const reqId = useRef(0);
@@ -37,15 +50,21 @@ export default function useExitAdvisor() {
   const sig = signature(s);
 
   // any change by the user clears the "picked example" highlight and the "checked just now" note
-  const edit = useCallback((patch) => setS((p) => ({ ...p, ...patch, scn: null, checked: false })), []);
-  const setType = useCallback((t) => setS((p) => (p.type === t ? p : {
-    ...p,
-    type: t,
-    cat: t === 'Equity Fund' ? EQ[0] : DB[2],
-    load: '',
-    scn: null,
-    checked: false,
-  })), []);
+  const edit = useCallback((patch) => {
+    setPrefilled(false);
+    setS((p) => ({ ...p, ...patch, scn: null, checked: false }));
+  }, []);
+  const setType = useCallback((t) => {
+    setPrefilled(false);
+    setS((p) => (p.type === t ? p : {
+      ...p,
+      type: t,
+      cat: t === 'Equity Fund' ? EQ[0] : DB[2],
+      load: '',
+      scn: null,
+      checked: false,
+    }));
+  }, []);
   const setDays = useCallback((raw) => {
     const d = parseInt(raw, 10);
     edit({ days: Number.isNaN(d) ? 0 : Math.max(0, d) });
@@ -55,6 +74,7 @@ export default function useExitAdvisor() {
   }, [edit, now]);
   const toggleAdv = useCallback(() => setS((p) => ({ ...p, adv: !p.adv })), []);
   const pickScenario = useCallback((k) => {
+    setPrefilled(false);
     const c = SCENARIOS[k];
     setS((p) => ({ ...p, type: c.type, cat: c.cat, inv: c.inv, cur: c.cur, days: c.days, load: c.load, slab: c.slab || p.slab, scn: k, checked: false }));
   }, []);
@@ -106,7 +126,7 @@ export default function useExitAdvisor() {
   const ai = { mode, en: aiRes && aiRes.en, hi: aiRes && aiRes.hi };
 
   return {
-    now, s, v, quick, ai, dragging, setDragging,
+    now, s, v, quick, ai, dragging, setDragging, prefilled,
     edit, setType, setDays, setDaysFromDate, toggleAdv, pickScenario, submit,
     aiCardRef, verdictRef,
   };

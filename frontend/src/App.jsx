@@ -8,6 +8,7 @@ import ExplainerPage from './pages/ExplainerPage';
 import FinancesPage from './pages/FinancesPage';
 import LoanPage from './pages/LoanPage';
 import { derive } from './lib/whatif/healthScore.js';
+import { writeSession } from './lib/finances/format.js';
 import ErrorBanner from './components/ErrorBanner';
 import { simulatePolicy, checkBackendHealth } from './services/api';
 
@@ -40,6 +41,8 @@ export default function App() {
 
   const [inputs, setInputs] = useState(INITIAL_INPUTS);
   const [language, setLanguage] = useState('en');
+  const [loanAutoFill, setLoanAutoFill] = useState(0);
+  const [exitPrefill, setExitPrefill] = useState(null);
   const [whatIfInputs, setWhatIfInputs] = useState(null);
   const [explanation, setExplanation] = useState(null);
   const [aiPlan, setAiPlan] = useState(null);
@@ -74,6 +77,9 @@ export default function App() {
   }, []);
 
   const navigateTo = (tab, subTab = 'simulator') => {
+    if (tab !== 'calculator' || subTab !== 'exitAdvisor') {
+      setExitPrefill(null);
+    }
     setActiveTab(tab);
     if (tab === 'calculator') {
       setCalculatorSubTab(subTab);
@@ -87,6 +93,59 @@ export default function App() {
   const handleSelectPreset = (newInputs) => {
     setInputs(newInputs);
     navigateTo('calculator', 'simulator');
+  };
+
+  const handleOpenFinancesTool = (tool, numbers) => {
+    if (tool === 'whatif') {
+      const patch = {};
+      const parsePositive = (val) => {
+        if (val == null || val === '') return null;
+        const cleaned = typeof val === 'string' ? val.replace(/,/g, '').trim() : val;
+        const num = Number(cleaned);
+        return Number.isFinite(num) && num > 0 ? num : null;
+      };
+
+      const sip = parsePositive(numbers?.sip?.monthly_sip_amount);
+      if (sip !== null) patch.monthly_sip = sip;
+
+      const emi = parsePositive(numbers?.loan?.emi_amount);
+      if (emi !== null) patch.loan_emi = emi;
+
+      const rate = parsePositive(numbers?.loan?.interest_rate_pct);
+      if (rate !== null) patch.loan_interest_rate = rate;
+
+      const salary = parsePositive(numbers?.income?.monthly_gross_salary);
+      if (salary !== null) patch.annual_income = salary * 12;
+
+      if (Object.keys(patch).length > 0) {
+        setInputs((current) => ({ ...current, ...patch }));
+      }
+      navigateTo('calculator', 'simulator');
+    } else if (tool === 'loan') {
+      writeSession('return-policy-finances', numbers);
+      setLoanAutoFill((n) => n + 1);
+      navigateTo('calculator', 'loan');
+    } else if (tool === 'exit') {
+      const parsePositive = (val) => {
+        if (val == null || val === '') return null;
+        const cleaned = typeof val === 'string' ? val.replace(/,/g, '').trim() : val;
+        const num = Number(cleaned);
+        return Number.isFinite(num) && num > 0 ? num : null;
+      };
+
+      const inv = parsePositive(numbers?.sip?.invested_amount);
+      const cur = parsePositive(numbers?.sip?.current_value);
+
+      if (inv !== null || cur !== null) {
+        const prefill = {};
+        if (inv !== null) prefill.inv = inv;
+        if (cur !== null) prefill.cur = cur;
+        setExitPrefill(prefill);
+      } else {
+        setExitPrefill(null);
+      }
+      navigateTo('calculator', 'exitAdvisor');
+    }
   };
 
 
@@ -196,6 +255,8 @@ export default function App() {
   if (activeTab === 'calculator' && calculatorSubTab === 'exitAdvisor') {
     return (
       <ExitPage
+        prefill={exitPrefill}
+        onPrefillUsed={() => setExitPrefill(null)}
         lang={language}
         onLangChange={setLanguage}
         onToolChange={(id) => {
@@ -224,6 +285,7 @@ export default function App() {
   if (activeTab === 'calculator' && calculatorSubTab === 'loan') {
     return (
       <LoanPage
+        autoFill={loanAutoFill}
         lang={language}
         onLangChange={setLanguage}
         onToolChange={(id) => {
@@ -236,7 +298,7 @@ export default function App() {
   }
 
   if (activeTab === 'finances') {
-    return <FinancesPage />;
+    return <FinancesPage onOpenTool={handleOpenFinancesTool} />;
   }
 
   return (

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { cleanNumber, duration, indianNumber, readFinances } from '../../lib/loan/format.js';
+import { cleanNumber, duration, indianNumber, loanFieldsFromFinances, readFinances } from '../../lib/loan/format.js';
 
 export default function LoanInputPanel({ values, onChange, onCompare, onFill, errors, message, t, busy }) {
   const [focused, setFocused] = useState(null);
@@ -7,11 +7,7 @@ export default function LoanInputPanel({ values, onChange, onCompare, onFill, er
   const blurValue = (key) => { if (focused === key) setFocused(null); };
   const displayValue = (key, value) => focused === key || !value ? value : (key === fields[0] || key === fields[3] ? indianNumber(cleanNumber(value)) : value);
   const fill = () => {
-    const loan = readFinances()?.loan || {};
-    const next = {};
-    if (loan.outstanding_principal != null) next.outstanding_principal = loan.outstanding_principal;
-    if (loan.interest_rate_pct != null) next.annual_interest_rate_pct = loan.interest_rate_pct;
-    if (loan.remaining_months != null) next.remaining_tenure_months = loan.remaining_months;
+    const next = loanFieldsFromFinances(readFinances()?.loan);
     onFill(next, Object.keys(next).length > 0 ? t.filledFinances : t.noFinances);
   };
   return <section className="lv-card lv-input-card">

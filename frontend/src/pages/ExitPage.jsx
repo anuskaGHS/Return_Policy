@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import WhatIfHeader from '../components/whatif/WhatIfHeader.jsx';
 import WhatIfFooter from '../components/whatif/WhatIfFooter.jsx';
 import ToolTabs from '../components/whatif/ToolTabs.jsx';
@@ -15,12 +15,13 @@ import { ClockIcon } from '../components/exit/icons.jsx';
 import useExitAdvisor from '../hooks/useExitAdvisor.js';
 import useExitText from '../hooks/useExitText.js';
 import { LangContext } from '../hooks/useLang.js';
+import { prefillNoteText } from '../lib/exit/copy.js';
 import '../styles/whatif.css';
 import '../styles/exit.css';
 
 function ExitBody({ x, onToolChange }) {
-  const { t } = useExitText();
-  const { v } = x;
+  const { t, lang } = useExitText();
+  const { v, prefilled } = x;
   return (
     <main className="wi-main ex-main">
       <ToolTabs active="smartexit" onSelect={onToolChange} />
@@ -34,7 +35,10 @@ function ExitBody({ x, onToolChange }) {
       <ScenarioCards x={x} />
 
       <div className="ex-console">
-        <FundForm x={x} />
+        <div className="ex-form-col">
+          {prefilled && <p role="status" className="ex-prefill-note">{prefillNoteText(lang)}</p>}
+          <FundForm x={x} />
+        </div>
         <div className={`ex-rcol${v.empty ? ' ex-rc-empty' : ''}`}>
           <VerdictCard x={x} />
           <CostChart x={x} />
@@ -55,10 +59,17 @@ function ExitBody({ x, onToolChange }) {
 // Props (all optional, same as WhatIfPage):
 //   lang / onLangChange   controlled from outside; the page keeps its own language if omitted
 //   onToolChange          called with 'whatif' or 'smartexit' when a tab is pressed
-export default function ExitPage({ lang, onLangChange, onToolChange }) {
+export default function ExitPage({ prefill, onPrefillUsed, lang, onLangChange, onToolChange }) {
   const [ownLang, setOwnLang] = useState('en');
   const language = (lang || ownLang) === 'hi' ? 'hi' : 'en';
-  const x = useExitAdvisor();
+  const x = useExitAdvisor(prefill);
+
+  useEffect(() => {
+    if (prefill && onPrefillUsed) {
+      onPrefillUsed();
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   return (
     <LangContext.Provider value={language}>
       <div className="wi ex" id="ex" lang={language}>
@@ -69,3 +80,4 @@ export default function ExitPage({ lang, onLangChange, onToolChange }) {
     </LangContext.Provider>
   );
 }
+

@@ -304,3 +304,10 @@ export function ruleTiles(v, loadText, lang) {
     { cls: 'r3', kick: L('Check your fund', 'अपना फ़ंड जाँचें'), tag: { text: L('Verify', 'जाँचें'), warn: true }, big: '65%', p: L('These rules are for funds that put more than 65% of their money in debt and money market instruments. Hybrid, gold and international funds can be taxed differently.', 'ये नियम उन फ़ंड के लिए हैं जो 65% से ज़्यादा पैसा डेट और मनी मार्केट साधनों में लगाते हैं। हाइब्रिड, गोल्ड और इंटरनेशनल फ़ंड पर टैक्स अलग हो सकता है।'), foot: L('Check the SID or factsheet for the debt share', 'डेट हिस्सेदारी के लिए SID या फ़ैक्टशीट देखें') },
   ];
 }
+
+export function prefillNoteText(lang) {
+  return mk(lang)(
+    'Filled from your SIP statement. A SIP is bought in instalments, so check the days held.',
+    'आपके SIP स्टेटमेंट से भरा गया है। SIP किस्तों में खरीदी जाती है, इसलिए रखने के दिन जाँच लें।',
+  );
+}

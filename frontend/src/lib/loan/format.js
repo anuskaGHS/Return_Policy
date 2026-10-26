@@ -43,3 +43,20 @@ export function readFinances() {
   }
 }
 
+export function loanFieldsFromFinances(loan) {
+  const next = {};
+  if (!loan || typeof loan !== 'object') return next;
+  const toPositive = (val) => {
+    if (val == null || val === '') return null;
+    const num = cleanNumber(val);
+    return Number.isFinite(num) && num > 0 ? num : null;
+  };
+  const principal = toPositive(loan.outstanding_principal);
+  if (principal !== null) next.outstanding_principal = principal;
+  const rate = toPositive(loan.interest_rate_pct);
+  if (rate !== null) next.annual_interest_rate_pct = rate;
+  const months = toPositive(loan.remaining_months);
+  if (months !== null) next.remaining_tenure_months = months;
+  return next;
+}
+
